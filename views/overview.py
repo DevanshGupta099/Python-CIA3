@@ -9,6 +9,7 @@ from utils.advisor import open_student_drawer
 from utils.analytics import build_student_leaderboard
 from utils.charts import (
     cia_progression_area_chart,
+    cohort_gpa_trend_chart,
     grade_distribution_chart,
     render_seaborn_png_cached,
     subject_cia_breakdown_chart,
@@ -140,16 +141,32 @@ def _render_breakdown_section(active_df: pd.DataFrame) -> None:
         )
 
     with col_right.container(border=True, height="stretch"):
-        card_header(
-            "CIA 1 → Mid-Sem → CIA 3 → ESE Momentum",
-            "Cohort progression trajectory across semester milestones",
+        r_ctrl = card_header(
+            "Semester Trajectory & GPA Trend",
+            "Switch between CIA milestone momentum and Sem 1 → Sem 2 GPA trend",
             verified=True,
         )
-        st.plotly_chart(
-            cia_progression_area_chart(active_df),
-            width="stretch",
-            config={"displayModeBar": False},
+        traj_mode = r_ctrl.segmented_control(
+            "Trajectory View",
+            ["CIA Momentum", "Sem 1→2 GPA"],
+            default="CIA Momentum",
+            required=True,
+            key="ov_traj_mode",
+            label_visibility="collapsed",
         )
+        if traj_mode == "CIA Momentum":
+            st.plotly_chart(
+                cia_progression_area_chart(active_df),
+                width="stretch",
+                config={"displayModeBar": False},
+            )
+        else:
+            lb_sub = build_student_leaderboard(active_df)
+            st.plotly_chart(
+                cohort_gpa_trend_chart(lb_sub),
+                width="stretch",
+                config={"displayModeBar": False},
+            )
 
 
 _render_breakdown_section(df)

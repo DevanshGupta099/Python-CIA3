@@ -74,12 +74,55 @@ pending_jump = st.session_state.pop("_pending_page_jump", None)
 if pending_jump:
     st.switch_page(pending_jump)
 
-# Persistent filter state across page switches so navigating never wipes active filters
-st.session_state.setdefault("_saved_cohort", "All")
-st.session_state.setdefault("_saved_subjects", [])
-st.session_state.setdefault("_saved_grades", [])
-st.session_state.setdefault("_saved_risk", [])
-st.session_state.setdefault("_saved_att_short", False)
+
+def _hydrate_filters_from_url_once() -> None:
+    """Hydrate initial session filter memory from URL query parameters on first load."""
+    if st.session_state.get("_url_hydrated"):
+        return
+    st.session_state["_url_hydrated"] = True
+    qp = st.query_params
+
+    q_cohort = qp.get("cohort", "All")
+    st.session_state["_saved_cohort"] = q_cohort if q_cohort in ("All", *SECTIONS) else "All"
+
+    raw_subs = [s for s in qp.get_all("sub") if s in SUBJECT_CODES]
+    st.session_state["_saved_subjects"] = raw_subs
+
+    raw_grades = [g for g in qp.get_all("grade") if g in GRADE_ORDER]
+    st.session_state["_saved_grades"] = raw_grades
+
+    raw_risk = [r for r in qp.get_all("risk") if r in RISK_LEVELS]
+    st.session_state["_saved_risk"] = raw_risk
+
+    st.session_state["_saved_att_short"] = qp.get("att_short", "0") in ("1", "true", "True")
+
+
+_hydrate_filters_from_url_once()
+
+
+def _write_query_params_from_saved() -> None:
+    """Mirror saved filter state into shareable URL query parameters."""
+    cohort = st.session_state.get("_saved_cohort", "All")
+    subs = list(st.session_state.get("_saved_subjects", []))
+    grades = list(st.session_state.get("_saved_grades", []))
+    risks = list(st.session_state.get("_saved_risk", []))
+    att_short = bool(st.session_state.get("_saved_att_short", False))
+
+    new_params: dict[str, str | list[str]] = {}
+    if cohort != "All":
+        new_params["cohort"] = cohort
+    if subs:
+        new_params["sub"] = subs
+    if grades:
+        new_params["grade"] = grades
+    if risks:
+        new_params["risk"] = risks
+    if att_short:
+        new_params["att_short"] = "1"
+
+    st.query_params.clear()
+    for k, v in new_params.items():
+        st.query_params[k] = v
 
 
 def _sync_saved_filters() -> None:
@@ -88,6 +131,7 @@ def _sync_saved_filters() -> None:
     st.session_state["_saved_grades"] = list(st.session_state.get("flt_grades", []))
     st.session_state["_saved_risk"] = list(st.session_state.get("flt_risk", []))
     st.session_state["_saved_att_short"] = bool(st.session_state.get("flt_att_short", False))
+    _write_query_params_from_saved()
 
 
 def reset_global_filters() -> None:
@@ -101,6 +145,7 @@ def reset_global_filters() -> None:
     st.session_state["_saved_grades"] = []
     st.session_state["_saved_risk"] = []
     st.session_state["_saved_att_short"] = False
+    st.query_params.clear()
 
 
 # Instant <1ms cached load keyed on monotonic SQLite write version
@@ -119,7 +164,7 @@ with st.container(horizontal=True, vertical_alignment="center"):
         icon=":material/restart_alt:",
         type="tertiary",
         on_click=reset_global_filters,
-        help="Reset cohort, subject, grade, and attendance filters",
+        help="Reset cohort, subject, grade, and URL filters",
     )
     ask_clicked = st.button(
         "Academic Insights",
@@ -129,7 +174,6 @@ with st.container(horizontal=True, vertical_alignment="center"):
     )
 
 if page.title in {"Overview", "Data Studio"}:
-    # Seed widget state from persistent memory when returning from other views
     if "cohort_seg" not in st.session_state:
         st.session_state["cohort_seg"] = st.session_state["_saved_cohort"]
     if "flt_subjects" not in st.session_state:
@@ -175,7 +219,7 @@ if page.title in {"Overview", "Data Studio"}:
                 key="flt_risk",
                 on_change=_sync_saved_filters,
             )
-            st.caption("Filters persist seamlessly as you switch between dashboard views.")
+            st.caption("Filters sync to URL query parameters and persist across views.")
 
         att_short = st.toggle(
             "Attendance < 85% Only",
@@ -184,7 +228,6 @@ if page.title in {"Overview", "Data Studio"}:
             help="Highlight assessments below CHRIST University's 85% attendance eligibility.",
         )
 
-    _sync_saved_filters()
     active_sections = SECTIONS if cohort_choice == "All" else (cohort_choice,)
     filters = GlobalFilters(
         sections=active_sections,

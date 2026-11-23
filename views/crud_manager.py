@@ -1,4 +1,4 @@
-"""Live CIA Marks Manager: Full CRUD (Student + Marks), Validations, Fragment Search & Live Sync."""
+"""Live CIA Marks Manager: Full CRUD (Single + 6-Subject Onboarding), Validations & Manual/CSV/GSheets Sync."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from utils.constants import (
     SECTIONS,
     SUBJECT_CODES,
     SUBJECT_LABELS,
+    SUBJECTS,
 )
 from utils.database import (
     CSV_SEED_PATH,
@@ -26,23 +27,27 @@ from utils.database import (
     upsert_student_assessment,
 )
 from utils.ui import card_header, render_hero_strip
-from utils.validators import validate_assessment_scores, validate_imported_dataframe, validate_student_record
+from utils.validators import (
+    validate_assessment_scores,
+    validate_imported_dataframe,
+    validate_student_record,
+)
 
 full_df: pd.DataFrame = st.session_state["full_df"]
 audit_df_top = get_audit_log_cached(get_db_version(), limit=25)
 
 render_hero_strip(
-    eyebrow="SQLite3 Persistence · Strict Input Validation · Google Sheets / CSV Live Sync",
+    eyebrow="SQLite3 Persistence · Strict Input Validation · Google Sheets / CSV / Manual Batch Sync",
     title="CIA Marks & Student Records Manager (Full CRUD)",
     subtitle=(
-        "Create new student CIA records, update student profiles & marks via validated forms or inline "
-        "spreadsheet editors, delete safely, or sync live CSV / Google Sheets data."
+        "Add single subject records or onboard a complete 6-subject student manually, update profiles & "
+        "marks inline, delete with safety guards, or enter/sync live batch sheets."
     ),
     chips=[
         f"{full_df['reg_no'].nunique()} Stored Students",
         f"{len(full_df)} Subject Assessments",
         f"{len(audit_df_top)} Recent Audit Events",
-        "Instant Cache Sync",
+        "Regex + Bound Validated",
     ],
 )
 
@@ -55,87 +60,178 @@ tab_create, tab_update, tab_delete, tab_sync = st.tabs(
     ]
 )
 
+
 # ---------------------------------------------------------------------------
-# Tab 1: CREATE — Add Student / Subject CIA Record with Full Validation
+# Tab 1: CREATE — Single Subject OR Full 6-Subject Manual Student Onboarding
 # ---------------------------------------------------------------------------
-with tab_create:
+@st.fragment
+def _frag_create_record(existing_df: pd.DataFrame) -> None:
     with st.container(border=True):
-        card_header(
-            "Add New Student or Subject CIA Assessment",
-            "All fields enforce CHRIST University ID patterns and exact component mark limits",
+        c_ctrl = card_header(
+            "Create Student & Subject CIA Assessment",
+            "Enter a single subject assessment or onboard a new student across all 6 MCA subjects manually",
             verified=True,
         )
-        with st.form("crud_create_form", clear_on_submit=False):
-            r1c1, r1c2, r1c3, r1c4 = st.columns([1.2, 2.0, 1.1, 2.0])
-            in_reg = r1c1.text_input("Register No. *", placeholder="2547131", help="7-digit CHRIST ID starting with 2")
-            in_name = r1c2.text_input("Student Full Name *", placeholder="Aarav Nair")
-            in_sec = r1c3.selectbox("Cohort *", options=list(SECTIONS))
-            in_mail = r1c4.text_input(
-                "University Email (auto-filled if blank)",
-                placeholder="aarav.nair@mca.christuniversity.in",
-            )
+        create_mode = c_ctrl.segmented_control(
+            "Entry Mode",
+            ["Single Subject Form", "Full 6-Subject Student Sheet"],
+            default="Single Subject Form",
+            required=True,
+            key="crud_create_mode",
+            label_visibility="collapsed",
+        )
 
-            r2c1, r2c2, r2c3 = st.columns([2.2, 1.2, 1.6])
-            in_sub = r2c1.selectbox(
-                "MCA Subject *",
-                options=list(SUBJECT_CODES),
-                format_func=lambda c: SUBJECT_LABELS[c],
-            )
-            in_sem1 = r2c2.number_input("Sem 1 SGPA *", min_value=0.0, max_value=10.0, value=7.8, step=0.1)
-            allow_upsert = r2c3.checkbox(
-                "Update if (Reg No + Subject) exists",
-                value=False,
-                help="Keep unchecked to strictly prevent duplicate records.",
-            )
+        if create_mode == "Single Subject Form":
+            with st.form("crud_create_form", clear_on_submit=False):
+                r1c1, r1c2, r1c3, r1c4 = st.columns([1.2, 2.0, 1.1, 2.0])
+                in_reg = r1c1.text_input("Register No. *", placeholder="2547131", help="7-digit CHRIST ID starting with 2")
+                in_name = r1c2.text_input("Student Full Name *", placeholder="Aarav Nair")
+                in_sec = r1c3.selectbox("Cohort *", options=list(SECTIONS))
+                in_mail = r1c4.text_input(
+                    "University Email (auto-filled if blank)",
+                    placeholder="aarav.nair@mca.christuniversity.in",
+                )
 
-            r3c1, r3c2, r3c3, r3c4, r3c5 = st.columns(5)
-            in_cia1 = r3c1.number_input("CIA 1 (/20) *", min_value=0.0, max_value=20.0, value=16.0, step=0.5)
-            in_cia2 = r3c2.number_input("Mid-Sem CIA 2 (/50) *", min_value=0.0, max_value=50.0, value=38.0, step=0.5)
-            in_cia3 = r3c3.number_input("CIA 3 Assign. (/20) *", min_value=0.0, max_value=20.0, value=17.0, step=0.5)
-            in_att = r3c4.number_input("Attendance (%) *", min_value=0.0, max_value=100.0, value=91.0, step=0.5)
-            in_ese = r3c5.number_input("End-Sem (/100) *", min_value=0.0, max_value=100.0, value=78.0, step=1.0)
+                r2c1, r2c2, r2c3 = st.columns([2.2, 1.2, 1.6])
+                in_sub = r2c1.selectbox(
+                    "MCA Subject *",
+                    options=list(SUBJECT_CODES),
+                    format_func=lambda c: SUBJECT_LABELS[c],
+                )
+                in_sem1 = r2c2.number_input("Sem 1 SGPA *", min_value=0.0, max_value=10.0, value=7.8, step=0.1)
+                allow_upsert = r2c3.checkbox(
+                    "Update if (Reg No + Subject) exists",
+                    value=False,
+                    help="Keep unchecked to strictly prevent duplicate records.",
+                )
 
-            prev_int = round(0.5 * in_cia1 + 0.5 * in_cia2 + 0.5 * in_cia3 + float(attendance_to_marks(in_att)), 2)
-            prev_tot = round(prev_int + 0.5 * in_ese, 2)
-            prev_g, prev_gp, _ = assign_grade_and_gp(
-                pd.Series([prev_tot]).to_numpy(),
-                pd.Series([prev_int]).to_numpy(),
-                pd.Series([in_ese]).to_numpy(),
-            )
-            st.caption(
-                f"Live Preview → Internal: **{prev_int:.2f}/50** · Final Score: **{prev_tot:.1f}/100** · "
-                f"Computed Grade: **{prev_g[0]}** (GP {prev_gp[0]:.1f})"
-            )
+                r3c1, r3c2, r3c3, r3c4, r3c5 = st.columns(5)
+                in_cia1 = r3c1.number_input("CIA 1 (/20) *", min_value=0.0, max_value=20.0, value=16.0, step=0.5)
+                in_cia2 = r3c2.number_input("Mid-Sem CIA 2 (/50) *", min_value=0.0, max_value=50.0, value=38.0, step=0.5)
+                in_cia3 = r3c3.number_input("CIA 3 Assign. (/20) *", min_value=0.0, max_value=20.0, value=17.0, step=0.5)
+                in_att = r3c4.number_input("Attendance (%) *", min_value=0.0, max_value=100.0, value=91.0, step=0.5)
+                in_ese = r3c5.number_input("End-Sem (/100) *", min_value=0.0, max_value=100.0, value=78.0, step=1.0)
 
-            submitted = st.form_submit_button(
-                "Validate & Save Record", type="primary", icon=":material/save:"
-            )
+                prev_int = round(0.5 * in_cia1 + 0.5 * in_cia2 + 0.5 * in_cia3 + float(attendance_to_marks(in_att)), 2)
+                prev_tot = round(prev_int + 0.5 * in_ese, 2)
+                prev_g, prev_gp, _ = assign_grade_and_gp(
+                    pd.Series([prev_tot]).to_numpy(),
+                    pd.Series([prev_int]).to_numpy(),
+                    pd.Series([in_ese]).to_numpy(),
+                )
+                st.caption(
+                    f"Live Preview → Internal: **{prev_int:.2f}/50** · Final Score: **{prev_tot:.1f}/100** · "
+                    f"Computed Grade: **{prev_g[0]}** (GP {prev_gp[0]:.1f})"
+                )
 
-        if submitted:
-            is_ok, errors, cleaned = validate_student_record(
-                reg_no=in_reg,
-                name=in_name,
-                section=in_sec,
-                email=in_mail,
-                sem1_sgpa=in_sem1,
-                subject_code=in_sub,
-                cia1=in_cia1,
-                cia2=in_cia2,
-                cia3=in_cia3,
-                attendance=in_att,
-                end_sem=in_ese,
-            )
-            if not is_ok:
-                for err in errors:
-                    st.error(err, icon=":material/error:")
-            else:
-                saved, msg = upsert_student_assessment(cleaned, allow_overwrite=allow_upsert)
-                if saved:
-                    st.toast(msg, icon=":material/check_circle:")
-                    st.success(msg, icon=":material/check_circle:")
-                    st.rerun()
+                submitted = st.form_submit_button(
+                    "Validate & Save Record", type="primary", icon=":material/save:"
+                )
+
+            if submitted:
+                is_ok, errors, cleaned = validate_student_record(
+                    reg_no=in_reg,
+                    name=in_name,
+                    section=in_sec,
+                    email=in_mail,
+                    sem1_sgpa=in_sem1,
+                    subject_code=in_sub,
+                    cia1=in_cia1,
+                    cia2=in_cia2,
+                    cia3=in_cia3,
+                    attendance=in_att,
+                    end_sem=in_ese,
+                )
+                if not is_ok:
+                    for err in errors:
+                        st.error(err, icon=":material/error:")
                 else:
-                    st.error(msg, icon=":material/warning:")
+                    saved, msg = upsert_student_assessment(cleaned, allow_overwrite=allow_upsert)
+                    if saved:
+                        st.toast(msg, icon=":material/check_circle:")
+                        st.success(msg, icon=":material/check_circle:")
+                        st.rerun()
+                    else:
+                        st.error(msg, icon=":material/warning:")
+
+        else:
+            st.caption(
+                "Enter the new student's details below and manually fill/edit their marks across all **6 MCA subjects** "
+                "so their Radar polygon and 22-credit SGPA Planner are immediately populated."
+            )
+            m1, m2, m3, m4, m5 = st.columns([1.2, 1.9, 1.0, 1.9, 1.0])
+            m_reg = m1.text_input("Register No. *", placeholder="2547131", key="m6_reg")
+            m_name = m2.text_input("Student Full Name *", placeholder="Aarav Nair", key="m6_name")
+            m_sec = m3.selectbox("Cohort *", options=list(SECTIONS), key="m6_sec")
+            m_mail = m4.text_input("University Email", placeholder="Auto-generated if blank", key="m6_mail")
+            m_sem1 = m5.number_input("Sem 1 SGPA *", 0.0, 10.0, 8.0, 0.1, key="m6_sem1")
+
+            template_6 = pd.DataFrame(
+                [
+                    {
+                        "subject_code": code,
+                        "subject_name": str(SUBJECTS[code]["name"]),
+                        "credits": int(SUBJECTS[code]["credits"]),
+                        "cia1": 15.0,
+                        "cia2": 36.0,
+                        "cia3": 16.0,
+                        "attendance": 90.0,
+                        "end_sem": 75.0,
+                    }
+                    for code in SUBJECT_CODES
+                ]
+            )
+            edited_6 = st.data_editor(
+                template_6,
+                column_config={
+                    "subject_code": st.column_config.TextColumn("Code", disabled=True),
+                    "subject_name": st.column_config.TextColumn("Subject Name", disabled=True),
+                    "credits": st.column_config.NumberColumn("Cr.", disabled=True, width="small"),
+                    "cia1": st.column_config.NumberColumn("CIA 1 (/20) *", step=0.5, required=True),
+                    "cia2": st.column_config.NumberColumn("Mid-Sem (/50) *", step=0.5, required=True),
+                    "cia3": st.column_config.NumberColumn("CIA 3 (/20) *", step=0.5, required=True),
+                    "attendance": st.column_config.NumberColumn("Attendance (%) *", step=0.5, required=True),
+                    "end_sem": st.column_config.NumberColumn("End-Sem (/100) *", step=1.0, required=True),
+                },
+                hide_index=True,
+                width="stretch",
+                key="crud_m6_editor",
+            )
+            m_overwrite = st.checkbox(
+                "Allow updating if this Register No. already exists",
+                value=False,
+                key="m6_overwrite",
+            )
+
+            if st.button("Validate & Onboard All 6 Subjects", type="primary", icon=":material/person_add:"):
+                if not m_overwrite and str(m_reg).strip() in set(existing_df["reg_no"].values):
+                    st.error(
+                        f"Student {m_reg.strip()} already exists. Enable the overwrite checkbox above or enter a new Register No.",
+                        icon=":material/warning:",
+                    )
+                else:
+                    batch_df = edited_6.copy()
+                    batch_df["reg_no"] = m_reg
+                    batch_df["name"] = m_name
+                    batch_df["section"] = m_sec
+                    batch_df["email"] = m_mail
+                    batch_df["sem1_sgpa"] = m_sem1
+
+                    ok_all, row_errs, clean_6 = validate_imported_dataframe(batch_df)
+                    if not ok_all:
+                        for err in row_errs:
+                            st.error(err, icon=":material/error:")
+                    else:
+                        cnt, _ = sync_validated_dataframe(clean_6, replace_all=False)
+                        st.toast(
+                            f"Onboarded {clean_6.iloc[0]['name']} ({clean_6.iloc[0]['reg_no']}) across {cnt} subjects!",
+                            icon=":material/check_circle:",
+                        )
+                        st.rerun()
+
+
+with tab_create:
+    _frag_create_record(full_df)
 
 
 # ---------------------------------------------------------------------------
@@ -391,33 +487,89 @@ with tab_delete:
             else:
                 st.error(msg)
 
+
 # ---------------------------------------------------------------------------
-# Tab 4: LIVE SYNC (Google Sheets / CSV Import) + Factory Reset + Audit Log
+# Tab 4: LIVE SYNC (Manual Batch Sheet / CSV / Google Sheets) + Audit Log
 # ---------------------------------------------------------------------------
-with tab_sync:
-    sy_left, sy_right = st.columns([3, 2])
+@st.fragment
+def _frag_live_sync(audit_df: pd.DataFrame) -> None:
+    sy_left, sy_right = st.columns([3.1, 1.9])
 
     with sy_left.container(border=True, height="stretch"):
         card_header(
-            "Live CSV & Google Sheets Sync",
-            "Import validated live CIA sheets directly into SQLite and st.session_state",
+            "Live Batch Sheet, CSV & Google Sheets Sync",
+            "Manually enter/paste live batch rows, upload a CSV, or connect a public Google Sheet",
             verified=True,
         )
         sync_src = st.segmented_control(
             "Sync Source",
-            ["Upload CSV File", "Google Sheets Public Link"],
-            default="Upload CSV File",
+            ["Manual Batch Sheet", "Upload CSV File", "Google Sheets Link"],
+            default="Manual Batch Sheet",
             required=True,
             key="sync_src_mode",
             label_visibility="collapsed",
         )
-        replace_mode = st.checkbox(
-            "Replace entire database (uncheck to merge/upsert into existing records)",
-            value=False,
-        )
 
         incoming_df: pd.DataFrame | None = None
-        if sync_src == "Upload CSV File":
+        replace_mode = False
+
+        if sync_src == "Manual Batch Sheet":
+            st.caption(
+                "Add or edit rows directly in the staging sheet below (`+` adds new rows), then validate "
+                "and commit your batch to SQLite."
+            )
+            blank_stage = pd.DataFrame(
+                [
+                    {
+                        "reg_no": "2547101",
+                        "name": "Devansh Gupta",
+                        "section": "2MCA-A",
+                        "subject_code": "MCA411-2",
+                        "sem1_sgpa": 8.8,
+                        "cia1": 19.0,
+                        "cia2": 46.0,
+                        "cia3": 19.5,
+                        "attendance": 96.0,
+                        "end_sem": 92.0,
+                    }
+                ]
+            )
+            staged_rows = st.data_editor(
+                blank_stage,
+                num_rows="dynamic",
+                column_config={
+                    "reg_no": st.column_config.TextColumn("Reg. No. *", required=True),
+                    "name": st.column_config.TextColumn("Name *", required=True),
+                    "section": st.column_config.SelectboxColumn("Section *", options=list(SECTIONS), required=True),
+                    "subject_code": st.column_config.SelectboxColumn("Subject *", options=list(SUBJECT_CODES), required=True),
+                    "sem1_sgpa": st.column_config.NumberColumn("Sem1 SGPA", step=0.1),
+                    "cia1": st.column_config.NumberColumn("CIA1 (/20)", step=0.5),
+                    "cia2": st.column_config.NumberColumn("CIA2 (/50)", step=0.5),
+                    "cia3": st.column_config.NumberColumn("CIA3 (/20)", step=0.5),
+                    "attendance": st.column_config.NumberColumn("Att %", step=0.5),
+                    "end_sem": st.column_config.NumberColumn("ESE (/100)", step=1.0),
+                },
+                hide_index=True,
+                width="stretch",
+                key="sync_manual_stage_grid",
+            )
+            if st.button("Validate & Sync Staged Batch", type="primary", icon=":material/fact_check:"):
+                ok, errs, clean_df = validate_imported_dataframe(staged_rows)
+                if not ok:
+                    st.error("Batch validation caught input errors:")
+                    for e in errs:
+                        st.caption(f"• {e}")
+                else:
+                    _, msg = sync_validated_dataframe(clean_df, replace_all=False)
+                    st.toast(msg, icon=":material/check_circle:")
+                    st.rerun()
+
+        elif sync_src == "Upload CSV File":
+            replace_mode = st.checkbox(
+                "Replace entire database (uncheck to merge/upsert into existing records)",
+                value=False,
+                key="sync_csv_replace",
+            )
             up_file = st.file_uploader("Select CHRIST MCA CIA CSV file", type=["csv"])
             if up_file is not None:
                 try:
@@ -425,6 +577,11 @@ with tab_sync:
                 except Exception as exc:
                     st.error(f"Could not parse CSV file: {exc}")
         else:
+            replace_mode = st.checkbox(
+                "Replace entire database (uncheck to merge/upsert into existing records)",
+                value=False,
+                key="sync_gs_replace",
+            )
             gs_url = st.text_input(
                 "Paste Public Google Sheets URL",
                 placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0",
@@ -452,7 +609,7 @@ with tab_sync:
         with st.container(horizontal=True, vertical_alignment="center"):
             if CSV_SEED_PATH.exists():
                 st.download_button(
-                    "Download Sample CSV Template",
+                    "Download CSV Template",
                     data=CSV_SEED_PATH.read_bytes(),
                     file_name="christ_mca_cia_template.csv",
                     mime="text/csv",
@@ -472,7 +629,7 @@ with tab_sync:
             "Timestamped log of Create, Update, Bulk Edit, Delete & Sync events",
         )
         st.dataframe(
-            audit_df_top,
+            audit_df,
             column_config={
                 "action": st.column_config.TextColumn("Operation", width="small"),
                 "target_ref": st.column_config.TextColumn("Target"),
@@ -480,6 +637,10 @@ with tab_sync:
                 "created_at": st.column_config.TextColumn("Timestamp"),
             },
             hide_index=True,
-            height=330,
+            height=345,
             width="stretch",
         )
+
+
+with tab_sync:
+    _frag_live_sync(audit_df_top)
