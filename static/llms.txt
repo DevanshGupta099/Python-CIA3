@@ -1,0 +1,10 @@
+# ChristGrade: Real-Time 2MCA Academic Performance BI & Target Score Predictor
+
+> Real-time CIA 1, Mid-Semester (CIA 2), CIA 3 Assignment, 85% Attendance compliance, and End-Semester Target Score Predictor built for CHRIST (Deemed to be University) 2MCA cohorts.
+
+## Core Application Modules
+- [Executive Cohort Overview](https://christgrade.streamlit.app/): Cohort KPIs, CIA assessment architecture, GPA trends, CHRIST 10-point grade distribution, and Scholar Leaderboard.
+- [Student Standing & Radar](https://christgrade.streamlit.app/student_analytics): 6-axis student radar vs. class average, cohort quartile boxplots, What-If sandbox, and printable HTML marksheet.
+- [End-Semester Score Predictor](https://christgrade.streamlit.app/predictor): CHRIST grading formula target calculator, cross-validated scikit-learn ensemble forecast, and 22-credit SGPA planner.
+- [Data Manipulation Studio](https://christgrade.streamlit.app/data_lab): Interactive Graph Explorer, multi-column GroupBy, Pivot matrices, Z-score outlier slicer, and Faculty Policy Simulator.
+- [Marks & CRUD Manager](https://christgrade.streamlit.app/crud_manager): Validated SQLite3 CRUD, 6-subject onboarding, inline spreadsheet editor, and CSV/Google Sheets live sync.
