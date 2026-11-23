@@ -1,9 +1,10 @@
-"""Smart Academic Insights Drawer & Printable Student HTML Report Generator."""
+"""Smart Academic Insights Drawer, Deep-Link Student Modal & Printable HTML Report Generator."""
 
 from __future__ import annotations
 
 from datetime import datetime
 import html
+
 import pandas as pd
 import streamlit as st
 
@@ -98,7 +99,7 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
 
 @st.dialog("Student Profile & Marksheet", width="large", icon=":material/badge:")
 def open_student_drawer(reg_no: str, full_df: pd.DataFrame) -> None:
-    """Slide-over modal/drawer showing complete student standing, radar & printable report."""
+    """Slide-over modal showing complete student standing, radar, deep-links & printable report."""
     lb = build_student_leaderboard(full_df)
     stu_match = lb[lb["reg_no"] == reg_no]
     if stu_match.empty:
@@ -153,6 +154,14 @@ def open_student_drawer(reg_no: str, full_df: pd.DataFrame) -> None:
 
     report_bytes = generate_student_html_report(stu_rows, meta)
     with st.container(horizontal=True, horizontal_alignment="right"):
+        if st.button("Open in Student Radar", icon=":material/person_search:"):
+            st.session_state["_jump_stu_reg"] = reg_no
+            st.session_state["_pending_page_jump"] = "views/student_analytics.py"
+            st.rerun()
+        if st.button("Predict End-Sem Targets", icon=":material/ads_click:"):
+            st.session_state["_jump_pred_reg"] = reg_no
+            st.session_state["_pending_page_jump"] = "views/predictor.py"
+            st.rerun()
         st.download_button(
             "Download Official HTML Marksheet",
             data=report_bytes,
@@ -168,8 +177,26 @@ def _answer_academic_query(prompt: str, df: pd.DataFrame) -> str:
     if df.empty:
         return "No assessment rows are currently active. Reset filters to analyze the cohort."
 
-    q = prompt.lower()
+    q = prompt.strip().lower()
     lb = build_student_leaderboard(df)
+
+    # Direct student lookup by Register Number or Student Name
+    stu_hit = lb[
+        lb["reg_no"].str.lower().apply(lambda r: r in q)
+        | lb["name"].str.lower().apply(lambda n: any(tok in q for tok in n.split() if len(tok) >= 4))
+    ]
+    if not stu_hit.empty and not any(k in q for k in ("compare", "top", "toughest", "executive", "audit")):
+        s = stu_hit.iloc[0]
+        s_rows = df[df["reg_no"] == s["reg_no"]].sort_values("total_score", ascending=True)
+        weakest = s_rows.iloc[0]
+        strongest = s_rows.iloc[-1]
+        return (
+            f"**Scholar Brief — {s['name']} (`{s['reg_no']}`, {s['section']}):**\n"
+            f"- **Rank:** `#{int(s['rank'])}` · **Sem 2 SGPA:** `{s['sem2_sgpa']:.2f}` · **CGPA:** `{s['cgpa']:.2f}`\n"
+            f"- **Mean Internal:** `{s['avg_internal_50']:.2f}/50` · **Attendance:** `{s['avg_attendance']:.1f}%`\n"
+            f"- **Strongest Subject:** `{strongest['subject_code']} ({strongest['subject_short']})` at `{strongest['total_score']:.1f}/100` (Grade **{strongest['grade']}**)\n"
+            f"- **Focus Subject:** `{weakest['subject_code']} ({weakest['subject_short']})` at `{weakest['total_score']:.1f}/100` (Internal `{weakest['internal_50']:.1f}/50`)"
+        )
 
     if any(k in q for k in ("attendance", "condonation", "85", "shortage", "detain")):
         short = df[~df["att_eligible"]]
@@ -182,6 +209,19 @@ def _answer_academic_query(prompt: str, df: pd.DataFrame) -> str:
             f"- Highest concentration: **{top_sub}**.\n"
             f"- Overall 85%+ compliance stands at **{df['att_eligible'].mean() * 100:.1f}%**."
         )
+
+    if any(k in q for k in ("momentum", "improv", "cia3", "growth")):
+        imp = (
+            df.groupby(["reg_no", "name", "section"], as_index=False)["cia_momentum"]
+            .mean()
+            .sort_values("cia_momentum", ascending=False)
+            .head(5)
+        )
+        lines = [
+            f"- **{r.name}** (`{r.reg_no}`, {r.section}): `{r.cia_momentum:+.1f}%` avg gain from CIA 1 to CIA 3"
+            for r in imp.itertuples(index=False)
+        ]
+        return "**Top 5 CIA 1 → CIA 3 Momentum Improvers:**\n" + "\n".join(lines)
 
     if any(k in q for k in ("weak", "hard", "toughest", "lowest", "subject")):
         sub_stats = (
@@ -220,32 +260,35 @@ def _answer_academic_query(prompt: str, df: pd.DataFrame) -> str:
         ]
         return "**Top 5 Cohort Scholars (Active Filter):**\n" + "\n".join(items)
 
-    # Default executive brief
     return (
         f"**Executive Cohort Summary ({df['reg_no'].nunique()} Students · {len(df)} Assessments):**\n"
         f"- **Mean Composite Score:** `{df['total_score'].mean():.1f} / 100` (Internal `{df['internal_50'].mean():.2f} / 50`)\n"
         f"- **Pass Rate:** `{df['is_pass'].mean() * 100:.1f}%` · **O & A+ Share:** `{df['grade'].isin(['O', 'A+']).mean() * 100:.1f}%`\n"
         f"- **Top Cohort SGPA:** `{lb['sem2_sgpa'].max():.2f}` ({lb.iloc[0]['name']})\n"
-        f"- Ask me about *attendance shortages*, *toughest subjects*, *2MCA-A vs 2MCA-B*, or *top rankers*!"
+        f"- Ask about *toughest subjects*, *attendance <85%*, *CIA3 improvers*, *2MCA-A vs 2MCA-B*, or type any *Student Name / Reg. No.*!"
     )
 
 
 @st.dialog("ChristGrade Academic Insights", width="medium", icon=":material/auto_awesome:")
 def open_insights_drawer(df: pd.DataFrame) -> None:
     """Interactive data-grounded Academic Insights assistant over live filtered data."""
-    st.caption(
-        "Answers instantaneously from your live SQLite database and active URL filters."
-    )
+    st.caption("Answers instantaneously from your live SQLite database and active filters.")
     presets = [
         "Executive summary",
         "Toughest subjects",
         "Attendance < 85% audit",
+        "CIA3 top improvers",
         "Compare 2MCA-A vs 2MCA-B",
         "Top 5 rankers",
     ]
     picked = st.pills("Quick Prompts", presets, key="insights_quick_pill")
 
-    if "advisor_messages" not in st.session_state:
+    filter_sig = (len(df), round(float(df["total_score"].sum()), 1) if not df.empty else 0.0)
+    if (
+        "advisor_messages" not in st.session_state
+        or st.session_state.get("_advisor_sig") != filter_sig
+    ):
+        st.session_state["_advisor_sig"] = filter_sig
         st.session_state["advisor_messages"] = [
             {
                 "role": "assistant",
@@ -253,7 +296,7 @@ def open_insights_drawer(df: pd.DataFrame) -> None:
             }
         ]
 
-    user_q = st.chat_input("Ask about subjects, attendance, sections, or top rankers...")
+    user_q = st.chat_input("Ask about subjects, attendance, rankers, or a student's name/ID...")
     trigger = user_q or (picked if picked and st.session_state.get("_last_pill") != picked else None)
     if picked:
         st.session_state["_last_pill"] = picked
@@ -264,6 +307,7 @@ def open_insights_drawer(df: pd.DataFrame) -> None:
             {"role": "assistant", "content": _answer_academic_query(trigger, df)}
         )
 
-    for msg in st.session_state["advisor_messages"][-4:]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+    with st.container(height=300, border=False):
+        for msg in st.session_state["advisor_messages"][-6:]:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])

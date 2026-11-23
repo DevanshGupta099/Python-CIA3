@@ -10,7 +10,7 @@ from pathlib import Path
 import streamlit as st
 
 from utils.advisor import open_insights_drawer
-from utils.analytics import GlobalFilters, apply_global_filters, enrich_assessments
+from utils.analytics import GlobalFilters, apply_global_filters, load_enriched_cached
 from utils.constants import (
     GRADE_ORDER,
     RISK_LEVELS,
@@ -18,7 +18,7 @@ from utils.constants import (
     SUBJECT_CODES,
     SUBJECT_LABELS,
 )
-from utils.database import init_database, load_raw_assessments
+from utils.database import get_db_version, init_database
 from utils.ui import inject_custom_css, render_footer
 
 st.set_page_config(
@@ -69,6 +69,26 @@ page = st.navigation(
     position="top",
 )
 
+# Handle cross-page deep-links safely at top level
+pending_jump = st.session_state.pop("_pending_page_jump", None)
+if pending_jump:
+    st.switch_page(pending_jump)
+
+# Persistent filter state across page switches so navigating never wipes active filters
+st.session_state.setdefault("_saved_cohort", "All")
+st.session_state.setdefault("_saved_subjects", [])
+st.session_state.setdefault("_saved_grades", [])
+st.session_state.setdefault("_saved_risk", [])
+st.session_state.setdefault("_saved_att_short", False)
+
+
+def _sync_saved_filters() -> None:
+    st.session_state["_saved_cohort"] = st.session_state.get("cohort_seg", "All")
+    st.session_state["_saved_subjects"] = list(st.session_state.get("flt_subjects", []))
+    st.session_state["_saved_grades"] = list(st.session_state.get("flt_grades", []))
+    st.session_state["_saved_risk"] = list(st.session_state.get("flt_risk", []))
+    st.session_state["_saved_att_short"] = bool(st.session_state.get("flt_att_short", False))
+
 
 def reset_global_filters() -> None:
     st.session_state["cohort_seg"] = "All"
@@ -76,13 +96,19 @@ def reset_global_filters() -> None:
     st.session_state["flt_grades"] = []
     st.session_state["flt_risk"] = []
     st.session_state["flt_att_short"] = False
+    st.session_state["_saved_cohort"] = "All"
+    st.session_state["_saved_subjects"] = []
+    st.session_state["_saved_grades"] = []
+    st.session_state["_saved_risk"] = []
+    st.session_state["_saved_att_short"] = False
 
 
-raw_df = load_raw_assessments()
-full_df = enrich_assessments(raw_df)
+# Instant <1ms cached load keyed on monotonic SQLite write version
+full_df, full_leaderboard = load_enriched_cached(get_db_version())
 st.session_state["full_df"] = full_df
+st.session_state["full_leaderboard"] = full_leaderboard
 
-# Shared top header + Insights assistant + URL-bound global filter toolbar
+# Shared top header + Academic Insights drawer trigger
 with st.container(horizontal=True, vertical_alignment="center"):
     with st.container(gap=None):
         st.title(page.title, icon=page.icon, anchor=False)
@@ -103,14 +129,25 @@ with st.container(horizontal=True, vertical_alignment="center"):
     )
 
 if page.title in {"Overview", "Data Studio"}:
+    # Seed widget state from persistent memory when returning from other views
+    if "cohort_seg" not in st.session_state:
+        st.session_state["cohort_seg"] = st.session_state["_saved_cohort"]
+    if "flt_subjects" not in st.session_state:
+        st.session_state["flt_subjects"] = list(st.session_state["_saved_subjects"])
+    if "flt_grades" not in st.session_state:
+        st.session_state["flt_grades"] = list(st.session_state["_saved_grades"])
+    if "flt_risk" not in st.session_state:
+        st.session_state["flt_risk"] = list(st.session_state["_saved_risk"])
+    if "flt_att_short" not in st.session_state:
+        st.session_state["flt_att_short"] = bool(st.session_state["_saved_att_short"])
+
     with st.container(horizontal=True, vertical_alignment="center", gap="medium"):
         cohort_choice = st.segmented_control(
             "Cohort",
             ["All", *SECTIONS],
-            default="All",
             required=True,
             key="cohort_seg",
-            bind="query-params",
+            on_change=_sync_saved_filters,
             label_visibility="collapsed",
         )
         with st.popover("Filter Subjects & Grades", icon=":material/tune:"):
@@ -120,7 +157,7 @@ if page.title in {"Overview", "Data Studio"}:
                 format_func=lambda c: SUBJECT_LABELS[c],
                 selection_mode="multi",
                 key="flt_subjects",
-                bind="query-params",
+                on_change=_sync_saved_filters,
                 help="Leave empty to include all 6 subjects.",
             )
             sel_grades = st.pills(
@@ -128,7 +165,7 @@ if page.title in {"Overview", "Data Studio"}:
                 list(GRADE_ORDER),
                 selection_mode="multi",
                 key="flt_grades",
-                bind="query-params",
+                on_change=_sync_saved_filters,
                 help="Filter assessments by CHRIST University grade tier.",
             )
             sel_risk = st.pills(
@@ -136,18 +173,18 @@ if page.title in {"Overview", "Data Studio"}:
                 list(RISK_LEVELS),
                 selection_mode="multi",
                 key="flt_risk",
-                bind="query-params",
+                on_change=_sync_saved_filters,
             )
-            st.caption("Filters bind directly to URL query parameters for shareable views.")
+            st.caption("Filters persist seamlessly as you switch between dashboard views.")
 
         att_short = st.toggle(
             "Attendance < 85% Only",
-            value=False,
             key="flt_att_short",
-            bind="query-params",
+            on_change=_sync_saved_filters,
             help="Highlight assessments below CHRIST University's 85% attendance eligibility.",
         )
 
+    _sync_saved_filters()
     active_sections = SECTIONS if cohort_choice == "All" else (cohort_choice,)
     filters = GlobalFilters(
         sections=active_sections,

@@ -12,6 +12,7 @@ import urllib.request
 
 import numpy as np
 import pandas as pd
+import streamlit as st
 
 from utils.constants import CURRENT_SEMESTER, SECTIONS, SUBJECT_CODES, SUBJECTS
 
@@ -24,19 +25,36 @@ _FIRST_NAMES = [
     "Aarav", "Aditi", "Akash", "Ananya", "Arjun", "Bhavya", "Chaitanya", "Deepika",
     "Devansh", "Diya", "Gaurav", "Harshita", "Ishaan", "Jhanvi", "Karthik", "Kavya",
     "Lakshya", "Meera", "Nandini", "Nikhil", "Pranav", "Priya", "Rahul", "Rhea",
-    "Rohan", "ritika", "Sahil", "Sanjana", "Shreya", "Siddharth", " Sneha", "Tanvi",
-    "Varun", "Vedant", "Vidya", "Vikram", "Yash", "Zoya", "Abhinav", "aiswarya",
+    "Rohan", "Ritika", "Sahil", "Sanjana", "Shreya", "Siddharth", "Sneha", "Tanvi",
+    "Varun", "Vedant", "Vidya", "Vikram", "Yash", "Zoya", "Abhinav", "Aiswarya",
     "Amrita", "Anirudh", "Aparna", "Ashwin", "Darshan", "Divya", "Esha", "Gautam",
     "Hrithik", "Keerthana", "Madhav", "Malavika", "Naveen", "Neha", "Pooja", "Raghav",
-    "ritvik", "Swathi", "Tejas", "vishnu",
+    "Ritvik", "Swathi", "Tejas", "Vishnu",
 ]
 
 _LAST_NAMES = [
     "Gupta", "Sharma", "Nair", "Menon", "Reddy", "Iyer", "Mathew", "Joseph",
     "Verma", "Kulkarni", "Patel", "Rao", "Krishnan", "Thomas", "George", "Shetty",
-    "Deshmukh", "Chatterjee", "Bhat", "pillai", "Agarwal", "Mishra", "Joshi", "Hegde",
-    "kapoor", "varma", "Banerjee", "Nambiar", "Kurian", "ferns",
+    "Deshmukh", "Chatterjee", "Bhat", "Pillai", "Agarwal", "Mishra", "Joshi", "Hegde",
+    "Kapoor", "Varma", "Banerjee", "Nambiar", "Kurian", "Ferns",
 ]
+
+
+def get_db_version() -> int:
+    """Return monotonic counter incremented on any SQLite write to bust @st.cache_data."""
+    try:
+        return int(st.session_state.get("_cg_db_version", 0))
+    except Exception:
+        return 0
+
+
+def bump_db_version() -> None:
+    """Invalidate cached dataset reads immediately after any CRUD or Sync write."""
+    try:
+        st.session_state["_cg_db_version"] = int(st.session_state.get("_cg_db_version", 0)) + 1
+        st.cache_data.clear()
+    except Exception:
+        pass
 
 
 @contextmanager
@@ -94,14 +112,13 @@ def _generate_seed_dataframe() -> pd.DataFrame:
     rng = np.random.default_rng(2026)
     rows: list[dict[str, Any]] = []
 
-    # Subject difficulty offsets so box/radar plots show meaningful variation
     subj_offsets = {
-        "MCA411-2": 3.5,   # Python Programming (strong practical engagement)
-        "MCA412": -1.5,    # Adv DBMS
-        "MCA413": 2.5,     # Software Engineering
-        "MCA414": -3.5,    # Networks & Security (toughest theory)
-        "MCA415": -2.0,    # Machine Learning
-        "MCA416": 2.0,     # Cloud & DevOps
+        "MCA411-2": 3.5,
+        "MCA412": -1.5,
+        "MCA413": 2.5,
+        "MCA414": -3.5,
+        "MCA415": -2.0,
+        "MCA416": 2.0,
     }
 
     used_names: set[str] = set()
@@ -124,33 +141,31 @@ def _generate_seed_dataframe() -> pd.DataFrame:
         email_slug = re.sub(r"[^a-z0-9]", ".", full_name.lower()).strip(".")
         email = f"{email_slug}.{reg_no[-3:]}@mca.christuniversity.in"
 
-        # Assign realistic student archetype
         archetype_roll = idx % 10
         if idx == 0 or archetype_roll in (0, 1):
-            base_ability = rng.uniform(82, 93)    # High achiever
+            base_ability = rng.uniform(82, 93)
             att_base = rng.uniform(92, 99)
         elif archetype_roll in (2, 3, 4, 5):
-            base_ability = rng.uniform(68, 82)    # Solid mid-upper cohort
+            base_ability = rng.uniform(68, 82)
             att_base = rng.uniform(87, 96)
         elif archetype_roll in (6, 7, 8):
-            base_ability = rng.uniform(54, 69)    # Developing / mixed strengths
+            base_ability = rng.uniform(54, 69)
             att_base = rng.uniform(84, 92)
         else:
-            base_ability = rng.uniform(41, 56)    # At-risk / condonation zone
+            base_ability = rng.uniform(41, 56)
             att_base = rng.uniform(76, 86)
 
-        sem1_sgpa = float(np.clip((base_ability / 10.0) + rng.normal(0.15, 0.35), 5.2, 9.8))
-        sem1_sgpa = round(sem1_sgpa, 2)
+        sem1_sgpa = round(
+            float(np.clip((base_ability / 10.0) + rng.normal(0.15, 0.35), 5.2, 9.8)), 2
+        )
 
         for sub_code in SUBJECT_CODES:
             offset = subj_offsets[sub_code]
-            # Individual subject affinity so radar chart reveals genuine weak/strong subjects
             affinity = rng.normal(0.0, 6.5)
             latent_pct = np.clip(base_ability + offset + affinity, 30.0, 98.5)
 
             cia1 = np.clip((latent_pct / 100.0) * 20.0 + rng.normal(0, 1.3), 5.0, 20.0)
             cia2 = np.clip((latent_pct / 100.0) * 50.0 + rng.normal(-0.6, 3.2), 12.0, 50.0)
-            # Slight positive momentum in CIA3 assignment for dedicated students
             cia3 = np.clip((latent_pct / 100.0) * 20.0 + rng.normal(0.7, 1.2), 6.0, 20.0)
             attendance = np.clip(att_base + rng.normal(0, 2.8), 72.0, 100.0)
             end_sem = np.clip(latent_pct + rng.normal(0, 5.2), 28.0, 99.0)
@@ -184,12 +199,16 @@ def _log_audit(conn: sqlite3.Connection, action: str, target_ref: str, details: 
 
 
 def init_database(force_reset: bool = False) -> None:
-    """Initialize SQLite schema and seed CHRIST 2MCA dataset if empty or requested."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    seed_df = _generate_seed_dataframe()
-    if not CSV_SEED_PATH.exists() or force_reset:
-        seed_df.to_csv(CSV_SEED_PATH, index=False)
+    """Initialize SQLite schema and seed CHRIST 2MCA dataset; fast-paths when already initialized."""
+    if (
+        not force_reset
+        and DB_PATH.exists()
+        and CSV_SEED_PATH.exists()
+        and DB_PATH.stat().st_size > 8192
+    ):
+        return
 
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     with _get_connection() as conn:
         _create_tables(conn)
         if force_reset:
@@ -199,51 +218,59 @@ def init_database(force_reset: bool = False) -> None:
 
         cur = conn.execute("SELECT COUNT(*) AS cnt FROM assessments;")
         count = int(cur.fetchone()["cnt"])
-        if count == 0:
-            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            students_df = seed_df[
-                ["reg_no", "name", "section", "email", "sem1_sgpa"]
-            ].drop_duplicates(subset=["reg_no"])
+        if count == 0 or not CSV_SEED_PATH.exists() or force_reset:
+            seed_df = _generate_seed_dataframe()
+            if not CSV_SEED_PATH.exists() or force_reset:
+                seed_df.to_csv(CSV_SEED_PATH, index=False)
 
-            conn.executemany(
-                """
-                INSERT INTO students (reg_no, name, section, email, sem1_sgpa, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (r.reg_no, r.name, r.section, r.email, float(r.sem1_sgpa), now)
-                    for r in students_df.itertuples(index=False)
-                ],
-            )
-            conn.executemany(
-                """
-                INSERT INTO assessments (
-                    reg_no, subject_code, semester, cia1, cia2, cia3, attendance, end_sem, updated_at
+            if count == 0:
+                now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                students_df = seed_df[
+                    ["reg_no", "name", "section", "email", "sem1_sgpa"]
+                ].drop_duplicates(subset=["reg_no"])
+
+                conn.executemany(
+                    """
+                    INSERT INTO students (reg_no, name, section, email, sem1_sgpa, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (r.reg_no, r.name, r.section, r.email, float(r.sem1_sgpa), now)
+                        for r in students_df.itertuples(index=False)
+                    ],
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (
-                        r.reg_no,
-                        r.subject_code,
-                        r.semester,
-                        float(r.cia1),
-                        float(r.cia2),
-                        float(r.cia3),
-                        float(r.attendance),
-                        float(r.end_sem),
-                        now,
+                conn.executemany(
+                    """
+                    INSERT INTO assessments (
+                        reg_no, subject_code, semester, cia1, cia2, cia3, attendance, end_sem, updated_at
                     )
-                    for r in seed_df.itertuples(index=False)
-                ],
-            )
-            _log_audit(
-                conn,
-                "SEED",
-                "2MCA Cohort",
-                f"Initialized SQLite database with {len(students_df)} students and {len(seed_df)} CIA records.",
-            )
-            conn.commit()
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (
+                            r.reg_no,
+                            r.subject_code,
+                            r.semester,
+                            float(r.cia1),
+                            float(r.cia2),
+                            float(r.cia3),
+                            float(r.attendance),
+                            float(r.end_sem),
+                            now,
+                        )
+                        for r in seed_df.itertuples(index=False)
+                    ],
+                )
+                _log_audit(
+                    conn,
+                    "SEED",
+                    "2MCA Cohort",
+                    f"Initialized SQLite database with {len(students_df)} students and {len(seed_df)} CIA records.",
+                )
+                conn.commit()
+
+    if force_reset:
+        bump_db_version()
 
 
 def load_raw_assessments() -> pd.DataFrame:
@@ -386,6 +413,8 @@ def upsert_student_assessment(payload: dict[str, Any], allow_overwrite: bool = T
             f"Att={payload['attendance']}%, ESE={payload['end_sem']}",
         )
         conn.commit()
+
+    bump_db_version()
     return True, msg
 
 
@@ -419,6 +448,8 @@ def bulk_update_from_editor(edited_df: pd.DataFrame) -> tuple[int, str]:
             f"Saved inline score updates across {updated} assessment records.",
         )
         conn.commit()
+
+    bump_db_version()
     return updated, f"Saved updates across {updated} records to SQLite."
 
 
@@ -444,6 +475,8 @@ def delete_assessment_record(assessment_id: int) -> tuple[bool, str]:
 
         _log_audit(conn, "DELETE", f"{reg_no} · {sub_code}", "Deleted subject assessment record.")
         conn.commit()
+
+    bump_db_version()
     return True, f"Deleted {sub_code} record for Register No. {reg_no}."
 
 
@@ -466,6 +499,8 @@ def delete_student_profile(reg_no: str) -> tuple[bool, str]:
             f"Removed student {name} ({reg_no}) and all linked CIA records.",
         )
         conn.commit()
+
+    bump_db_version()
     return True, f"Removed student {name} ({reg_no}) and all linked CIA assessments."
 
 
@@ -520,6 +555,8 @@ def sync_validated_dataframe(clean_df: pd.DataFrame, replace_all: bool = False) 
         mode_label = "Replaced database with" if replace_all else "Synced & merged"
         _log_audit(conn, "LIVE_SYNC", f"{len(clean_df)} rows", f"{mode_label} {len(clean_df)} records.")
         conn.commit()
+
+    bump_db_version()
     return len(clean_df), f"{mode_label} {len(clean_df)} validated assessment records."
 
 
@@ -533,9 +570,16 @@ def fetch_google_sheets_dataframe(url: str) -> pd.DataFrame:
         gid_part = f"&gid={gid_match.group(1)}" if gid_match else ""
         clean_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv{gid_part}"
 
-    req = urllib.request.Request(clean_url, headers={"User-Agent": "ChristGrade-Dashboard/1.0"})
+    req = urllib.request.Request(clean_url, headers={"User-Agent": "ChristGrade-Dashboard/2.1"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         return pd.read_csv(resp)
+
+
+@st.cache_data(show_spinner=False)
+def get_audit_log_cached(db_version: int, limit: int = 25) -> pd.DataFrame:
+    """Cached audit log query keyed on db_version."""
+    _ = db_version
+    return get_audit_log_df(limit=limit)
 
 
 def get_audit_log_df(limit: int = 25) -> pd.DataFrame:

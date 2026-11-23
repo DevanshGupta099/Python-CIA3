@@ -1,4 +1,4 @@
-"""Student Deep-Dive: Interactive Radar, Box/Violin Standing, Printable Marksheet & GPA Trend."""
+"""Student Deep-Dive: Fragment-accelerated Radar, Box/Violin Standing, Printable Marksheet & GPA Trend."""
 
 from __future__ import annotations
 
@@ -16,26 +16,29 @@ from utils.constants import GRADE_BADGES, GRADE_ORDER, RISK_BADGES, SECTIONS
 from utils.ui import card_header, render_hero_strip
 
 full_df: pd.DataFrame = st.session_state["full_df"]
-leaderboard = build_student_leaderboard(full_df)
+leaderboard: pd.DataFrame = st.session_state["full_leaderboard"]
+
+# Handle incoming deep-link from Overview's Student Modal
+jumped_reg = st.session_state.pop("_jump_stu_reg", None)
+if jumped_reg:
+    st.session_state["stu_sec_pick"] = "All"
+    st.session_state["stu_selected_reg"] = jumped_reg
 
 render_hero_strip(
     eyebrow="Individual Academic Diagnostics & Live What-If Sandbox",
     title="Student Standing vs. Class Average · Radar, Box Plots & Printable Marksheet",
     subtitle=(
         "Inspect any 2MCA scholar's 6-subject polygon against cohort benchmarks, toggle Live What-If "
-        "marks in session memory, or export an official HTML Progress Card."
+        "marks in session memory, jump straight to Target Score Predictor, or export an HTML Progress Card."
     ),
     chips=[
         "6-Axis Radar Comparison",
-        "Quartile Box & Violin Standing",
+        "Instant Fragment Quartiles",
         "Live Session-State Sandbox",
         "Printable HTML Marksheet",
     ],
 )
 
-# ---------------------------------------------------------------------------
-# Student Selector Bar + Optional Live Session-State Sandbox
-# ---------------------------------------------------------------------------
 with st.container(border=True):
     c_sec, c_stu, c_sandbox = st.columns([1.3, 3.2, 1.5], vertical_alignment="bottom")
     sec_filter = c_sec.segmented_control(
@@ -51,6 +54,9 @@ with st.container(border=True):
         else leaderboard[leaderboard["section"] == sec_filter]
     )
     stu_options = stu_pool["reg_no"].tolist()
+    if st.session_state.get("stu_selected_reg") not in stu_options and stu_options:
+        st.session_state["stu_selected_reg"] = stu_options[0]
+
     stu_labels = {
         r.reg_no: f"{r.reg_no} · {r.name} ({r.section} · SGPA {r.sem2_sgpa:.2f})"
         for r in stu_pool.itertuples(index=False)
@@ -111,7 +117,7 @@ if sandbox_mode:
         stu_meta = build_student_leaderboard(re_enriched).query("reg_no == @selected_reg").iloc[0]
 
 # ---------------------------------------------------------------------------
-# Student Summary Badges, Printable Marksheet Button & KPI Row
+# Student Header Badges, Deep-Link to Predictor & Printable Marksheet
 # ---------------------------------------------------------------------------
 with st.container(horizontal=True, vertical_alignment="center"):
     with st.container(horizontal=True, vertical_alignment="center", gap="small"):
@@ -126,13 +132,18 @@ with st.container(horizontal=True, vertical_alignment="center"):
         if sandbox_mode:
             st.badge("Sandbox Mode Active", icon=":material/science:", color="red")
 
-    st.download_button(
-        "Download HTML Marksheet",
-        data=generate_student_html_report(student_rows, stu_meta),
-        file_name=f"ChristGrade_Marksheet_{selected_reg}.html",
-        mime="text/html",
-        icon=":material/download:",
-    )
+    with st.container(horizontal=True, horizontal_alignment="right", width="content"):
+        if st.button("Predict End-Sem Targets", icon=":material/ads_click:"):
+            st.session_state["_jump_pred_reg"] = selected_reg
+            st.switch_page("views/predictor.py")
+        st.download_button(
+            "Download HTML Marksheet",
+            data=generate_student_html_report(student_rows, stu_meta),
+            file_name=f"ChristGrade_Marksheet_{selected_reg}.html",
+            mime="text/html",
+            type="primary",
+            icon=":material/download:",
+        )
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric(
@@ -194,134 +205,156 @@ else:
         icon=":material/check_circle:",
     )
 
-# ---------------------------------------------------------------------------
-# Interactive Radar Plot + Box/Violin Standing Plot
-# ---------------------------------------------------------------------------
-r_col, b_col = st.columns([2, 3])
-
-with r_col.container(border=True, height="stretch"):
-    card_header(
-        "Multi-Subject Radar Profile",
-        "Selected student polygon vs. Class Average & Subject Topper",
-        verified=True,
-    )
-    st.plotly_chart(
-        student_radar_chart(student_rows, full_df),
-        width="stretch",
-        config={"displayModeBar": False},
-    )
-
-with b_col.container(border=True, height="stretch"):
-    b_ctrl = card_header(
-        "Standing Across Cohort Quartiles",
-        "Coral diamonds pinpoint the student inside each subject's distribution",
-        verified=True,
-    )
-    dist_metric = b_ctrl.segmented_control(
-        "Metric",
-        ["Total (/100)", "Internal (/50)"],
-        default="Total (/100)",
-        required=True,
-        key="stu_dist_metric",
-        label_visibility="collapsed",
-    )
-    dist_kind = b_ctrl.segmented_control(
-        "Plot",
-        ["Box Plot", "Violin Plot"],
-        default="Box Plot",
-        required=True,
-        key="stu_dist_kind",
-        label_visibility="collapsed",
-    )
-    st.plotly_chart(
-        subject_box_with_student_chart(
-            full_df,
-            student_rows,
-            metric_col="internal_50" if dist_metric == "Internal (/50)" else "total_score",
-            kind=dist_kind,
-        ),
-        width="stretch",
-        config={"displayModeBar": False},
-    )
 
 # ---------------------------------------------------------------------------
-# Semester GPA Trend + Detailed Subject Score Card Table
+# Fragment-Isolated Radar + Box/Violin Standing Plot
 # ---------------------------------------------------------------------------
-t_col1, t_col2 = st.columns([2, 3])
+@st.fragment
+def _render_radar_and_quartiles(stu_df: pd.DataFrame, cohort_df: pd.DataFrame) -> None:
+    r_col, b_col = st.columns([2, 3])
 
-with t_col1.container(border=True, height="stretch"):
-    t_ctrl = card_header(
-        "Semester SGPA & CGPA Trajectory",
-        "Historical Sem 1 -> Current Sem 2 -> Target Sem 3 projection",
-    )
-    target_sem3 = t_ctrl.slider(
-        "Sem 3 Goal",
-        min_value=6.0,
-        max_value=10.0,
-        value=min(10.0, round(float(stu_meta["sem2_sgpa"]) + 0.4, 1)),
-        step=0.1,
-        key="stu_sem3_goal",
-        label_visibility="collapsed",
-    )
-    st.plotly_chart(
-        semester_gpa_trend_chart(
-            sem1_sgpa=float(stu_meta["sem1_sgpa"]),
-            sem2_sgpa=float(stu_meta["sem2_sgpa"]),
-            projected_sem3=float(target_sem3),
-            cohort_sem1_mean=float(leaderboard["sem1_sgpa"].mean()),
-            cohort_sem2_mean=float(leaderboard["sem2_sgpa"].mean()),
-        ),
-        width="stretch",
-        config={"displayModeBar": False},
-    )
+    with r_col.container(border=True, height="stretch"):
+        card_header(
+            "Multi-Subject Radar Profile",
+            "Selected student polygon vs. Class Average & Subject Topper",
+            verified=True,
+        )
+        st.plotly_chart(
+            student_radar_chart(stu_df, cohort_df),
+            width="stretch",
+            config={"displayModeBar": False},
+        )
 
-with t_col2.container(border=True, height="stretch"):
-    card_header(
-        "Subject-by-Subject CIA Transcript",
-        "Detailed breakdown with class delta, Z-score, and percentile standing",
-    )
-    transcript = student_rows.copy()
-    transcript["grade_badge"] = transcript["grade"].map(lambda g: [g])
-    st.dataframe(
-        transcript[
-            [
-                "subject_code",
-                "subject_short",
-                "credits",
-                "cia1",
-                "cia2",
-                "cia3",
-                "attendance",
-                "internal_50",
-                "end_sem",
-                "total_score",
-                "score_vs_avg",
-                "percentile",
-                "grade_badge",
-            ]
-        ],
-        column_config={
-            "subject_code": st.column_config.TextColumn("Code"),
-            "subject_short": st.column_config.TextColumn("Subject"),
-            "credits": st.column_config.NumberColumn("Cr.", format="%d", width="small"),
-            "cia1": st.column_config.NumberColumn("CIA 1 (/20)", format="%.1f"),
-            "cia2": st.column_config.NumberColumn("CIA 2 (/50)", format="%.1f"),
-            "cia3": st.column_config.NumberColumn("CIA 3 (/20)", format="%.1f"),
-            "attendance": st.column_config.NumberColumn("Att. %", format="%.1f%%"),
-            "internal_50": st.column_config.NumberColumn("Int. (/50)", format="%.2f"),
-            "end_sem": st.column_config.NumberColumn("ESE (/100)", format="%.1f"),
-            "total_score": st.column_config.ProgressColumn(
-                "Final (/100)", min_value=0, max_value=100, format="%.1f"
+    with b_col.container(border=True, height="stretch"):
+        b_ctrl = card_header(
+            "Standing Across Cohort Quartiles",
+            "Coral diamonds pinpoint the student inside each subject's distribution",
+            verified=True,
+        )
+        dist_metric = b_ctrl.segmented_control(
+            "Metric",
+            ["Total (/100)", "Internal (/50)"],
+            default="Total (/100)",
+            required=True,
+            key="stu_dist_metric",
+            label_visibility="collapsed",
+        )
+        dist_kind = b_ctrl.segmented_control(
+            "Plot",
+            ["Box Plot", "Violin Plot"],
+            default="Box Plot",
+            required=True,
+            key="stu_dist_kind",
+            label_visibility="collapsed",
+        )
+        st.plotly_chart(
+            subject_box_with_student_chart(
+                cohort_df,
+                stu_df,
+                metric_col="internal_50" if dist_metric == "Internal (/50)" else "total_score",
+                kind=dist_kind,
             ),
-            "score_vs_avg": st.column_config.NumberColumn("vs Avg", format="%+.1f"),
-            "percentile": st.column_config.NumberColumn("Pct. Rank", format="%.0f%%"),
-            "grade_badge": st.column_config.MultiselectColumn(
-                "Grade",
-                options=list(GRADE_ORDER),
-                color=[GRADE_BADGES[g] for g in GRADE_ORDER],
+            width="stretch",
+            config={"displayModeBar": False},
+        )
+
+
+_render_radar_and_quartiles(student_rows, full_df)
+
+
+# ---------------------------------------------------------------------------
+# Fragment-Isolated Semester GPA Trajectory + Subject Transcript
+# ---------------------------------------------------------------------------
+@st.fragment
+def _render_gpa_and_transcript(
+    stu_df: pd.DataFrame,
+    meta: pd.Series,
+    c_sem1_mean: float,
+    c_sem2_mean: float,
+) -> None:
+    t_col1, t_col2 = st.columns([2, 3])
+
+    with t_col1.container(border=True, height="stretch"):
+        t_ctrl = card_header(
+            "Semester SGPA & CGPA Trajectory",
+            "Historical Sem 1 -> Current Sem 2 -> Target Sem 3 projection",
+        )
+        target_sem3 = t_ctrl.slider(
+            "Sem 3 Goal",
+            min_value=6.0,
+            max_value=10.0,
+            value=min(10.0, round(float(meta["sem2_sgpa"]) + 0.4, 1)),
+            step=0.1,
+            key=f"stu_sem3_goal_{meta['reg_no']}",
+            label_visibility="collapsed",
+        )
+        st.plotly_chart(
+            semester_gpa_trend_chart(
+                sem1_sgpa=float(meta["sem1_sgpa"]),
+                sem2_sgpa=float(meta["sem2_sgpa"]),
+                projected_sem3=float(target_sem3),
+                cohort_sem1_mean=c_sem1_mean,
+                cohort_sem2_mean=c_sem2_mean,
             ),
-        },
-        hide_index=True,
-        height=315,
-        width="stretch",
-    )
+            width="stretch",
+            config={"displayModeBar": False},
+        )
+
+    with t_col2.container(border=True, height="stretch"):
+        card_header(
+            "Subject-by-Subject CIA Transcript",
+            "Detailed breakdown with class delta, Z-score, and percentile standing",
+        )
+        transcript = stu_df.copy()
+        transcript["grade_badge"] = transcript["grade"].map(lambda g: [g])
+        st.dataframe(
+            transcript[
+                [
+                    "subject_code",
+                    "subject_short",
+                    "credits",
+                    "cia1",
+                    "cia2",
+                    "cia3",
+                    "attendance",
+                    "internal_50",
+                    "end_sem",
+                    "total_score",
+                    "score_vs_avg",
+                    "percentile",
+                    "grade_badge",
+                ]
+            ],
+            column_config={
+                "subject_code": st.column_config.TextColumn("Code"),
+                "subject_short": st.column_config.TextColumn("Subject"),
+                "credits": st.column_config.NumberColumn("Cr.", format="%d", width="small"),
+                "cia1": st.column_config.NumberColumn("CIA 1 (/20)", format="%.1f"),
+                "cia2": st.column_config.NumberColumn("CIA 2 (/50)", format="%.1f"),
+                "cia3": st.column_config.NumberColumn("CIA 3 (/20)", format="%.1f"),
+                "attendance": st.column_config.NumberColumn("Att. %", format="%.1f%%"),
+                "internal_50": st.column_config.NumberColumn("Int. (/50)", format="%.2f"),
+                "end_sem": st.column_config.NumberColumn("ESE (/100)", format="%.1f"),
+                "total_score": st.column_config.ProgressColumn(
+                    "Final (/100)", min_value=0, max_value=100, format="%.1f"
+                ),
+                "score_vs_avg": st.column_config.NumberColumn("vs Avg", format="%+.1f"),
+                "percentile": st.column_config.NumberColumn("Pct. Rank", format="%.0f%%"),
+                "grade_badge": st.column_config.MultiselectColumn(
+                    "Grade",
+                    options=list(GRADE_ORDER),
+                    color=[GRADE_BADGES[g] for g in GRADE_ORDER],
+                ),
+            },
+            hide_index=True,
+            height=315,
+            width="stretch",
+        )
+
+
+_render_gpa_and_transcript(
+    student_rows,
+    stu_meta,
+    float(leaderboard["sem1_sgpa"].mean()),
+    float(leaderboard["sem2_sgpa"].mean()),
+)
