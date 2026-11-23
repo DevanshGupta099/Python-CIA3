@@ -31,6 +31,7 @@ from utils.analytics import (
 )
 from utils.charts import (
     cia_progression_area_chart,
+    cohort_gpa_trend_chart,
     grade_distribution_chart,
     ml_feature_importance_chart,
     predictor_feasibility_curve,
@@ -211,6 +212,7 @@ def test_analytics_advisor_and_charts() -> None:
 
     assert subject_cia_breakdown_chart(df, "Stacked CIA").data
     assert cia_progression_area_chart(df).data
+    assert cohort_gpa_trend_chart(lb).data
     assert grade_distribution_chart(df, "Donut").data
     assert student_radar_chart(stu_df, df).data
     assert subject_box_with_student_chart(df, stu_df, "total_score", "Violin Plot").data

@@ -205,6 +205,46 @@ def cia_progression_area_chart(df: pd.DataFrame) -> go.Figure:
     return _apply_clean_axes(fig, y_title="Cohort Mean (%)")
 
 
+def cohort_gpa_trend_chart(leaderboard_df: pd.DataFrame) -> go.Figure:
+    """Cohort-wide Sem 1 SGPA -> Sem 2 SGPA -> Cumulative CGPA trend across 2MCA sections."""
+    fig = go.Figure()
+    if leaderboard_df.empty:
+        return _apply_clean_axes(fig)
+
+    stages = ["Sem 1 SGPA", "Sem 2 SGPA (Current)", "Cumulative CGPA"]
+    cols = ["sem1_sgpa", "sem2_sgpa", "cgpa"]
+    palette_map = {
+        "2MCA-A": ("#2563EB", "rgba(37, 99, 235, 0.18)"),
+        "2MCA-B": ("#F97316", "rgba(249, 115, 22, 0.16)"),
+    }
+
+    for sec in sorted(leaderboard_df["section"].unique()):
+        sub = leaderboard_df[leaderboard_df["section"] == sec]
+        means = [round(float(sub[c].mean()), 2) for c in cols]
+        line_col, fill_col = palette_map.get(sec, ("#E11D48", "rgba(225, 29, 72, 0.14)"))
+        fig.add_trace(
+            go.Scatter(
+                name=f"{sec} Mean",
+                x=stages,
+                y=means,
+                mode="lines+markers+text",
+                text=[f"{m:.2f}" for m in means],
+                textposition="top center",
+                line=dict(color=line_col, width=3.2, shape="spline", smoothing=0.75),
+                marker=dict(size=9, color=line_col, line=dict(width=2, color="#FFFFFF")),
+                fill="tozeroy",
+                fillcolor=fill_col,
+                hovertemplate=f"<b>{sec}</b> · %{{x}}: %{{y:.2f}} / 10<extra></extra>",
+            )
+        )
+
+    fig.update_layout(
+        legend=dict(orientation="h", y=1.14, x=0),
+        yaxis_range=[6.0, 9.6],
+    )
+    return _apply_clean_axes(fig, y_title="Mean GPA (10-Point Scale)")
+
+
 def grade_distribution_chart(df: pd.DataFrame, mode: str = "Donut") -> go.Figure:
     """Interactive Donut or Sunburst chart of CHRIST University letter grades."""
     if df.empty:
