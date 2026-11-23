@@ -1,0 +1,128 @@
+# ChristGrade "Solaris Editorial" Theme
+# Royal Cobalt x Crimson Rose x Sunset Coral x Champagne Gold
+# Crisp elevated surfaces in both Light and Dark modes.
+
+[theme]
+font = "'Plus Jakarta Sans':https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+headingFont = "'Plus Jakarta Sans':https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+baseFontSize = 14
+baseFontWeight = 400
+codeFontSize = "13px"
+headingFontSizes = ["26px", "19px", "16px", "15px", "14px", "12px"]
+headingFontWeights = [750, 650, 600, 600, 500, 500]
+metricValueFontSize = "1.85rem"
+metricValueFontWeight = 750
+baseRadius = "0.8rem"
+buttonRadius = "0.62rem"
+showWidgetBorder = true
+showSidebarBorder = true
+linkUnderline = false
+paddingTop = "1rem"
+paddingBottom = "3rem"
+
+[theme.sidebar]
+paddingTop = "1rem"
+paddingBottom = "1.5rem"
+
+[theme.light]
+primaryColor = "#2563EB"
+backgroundColor = "#F6F7FB"
+secondaryBackgroundColor = "#FFFFFF"
+codeBackgroundColor = "#EFF2F8"
+textColor = "#0F172A"
+linkColor = "#1D4ED8"
+borderColor = "#E2E6F0"
+codeTextColor = "#1E293B"
+blueColor = "#2563EB"
+greenColor = "#059669"
+yellowColor = "#D97706"
+orangeColor = "#F97316"
+redColor = "#E11D48"
+violetColor = "#4F46E5"
+grayColor = "#64748B"
+chartCategoricalColors = [
+    "#2563EB",
+    "#F97316",
+    "#E11D48",
+    "#0EA5E9",
+    "#F59E0B",
+    "#10B981",
+    "#1D4ED8",
+    "#FB7185",
+]
+chartSequentialColors = [
+    "#EFF6FF",
+    "#DBEAFE",
+    "#BFDBFE",
+    "#93C5FD",
+    "#60A5FA",
+    "#3B82F6",
+    "#2563EB",
+    "#1D4ED8",
+    "#E11D48",
+    "#F97316",
+]
+dataframeBorderColor = "#E2E6F0"
+dataframeHeaderBackgroundColor = "#F1F4FA"
+dataframeHeaderTextColor = "#475569"
+
+[theme.dark]
+primaryColor = "#3B82F6"
+backgroundColor = "#0A0D16"
+secondaryBackgroundColor = "#121726"
+codeBackgroundColor = "#1A2134"
+textColor = "#F1F5F9"
+linkColor = "#60A5FA"
+borderColor = "#1F293D"
+codeTextColor = "#E2E8F0"
+blueColor = "#3B82F6"
+greenColor = "#34D399"
+yellowColor = "#FBBF24"
+orangeColor = "#FB923C"
+redColor = "#FB7185"
+violetColor = "#818CF8"
+grayColor = "#94A3B8"
+chartCategoricalColors = [
+    "#3B82F6",
+    "#FB923C",
+    "#FB7185",
+    "#38BDF8",
+    "#FBBF24",
+    "#34D399",
+    "#60A5FA",
+    "#F43F5E",
+]
+chartSequentialColors = [
+    "#0F172A",
+    "#172554",
+    "#1E3A8A",
+    "#1D4ED8",
+    "#2563EB",
+    "#3B82F6",
+    "#E11D48",
+    "#F43F5E",
+    "#F97316",
+    "#FBBF24",
+]
+dataframeBorderColor = "#1F293D"
+dataframeHeaderBackgroundColor = "#101524"
+dataframeHeaderTextColor = "#94A3B8"
+
+[theme.light.sidebar]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F4FA"
+codeBackgroundColor = "#F1F4FA"
+textColor = "#0F172A"
+borderColor = "#E2E6F0"
+primaryColor = "#2563EB"
+linkColor = "#1D4ED8"
+
+[theme.dark.sidebar]
+backgroundColor = "#0D121F"
+secondaryBackgroundColor = "#151C2E"
+codeBackgroundColor = "#1A2134"
+textColor = "#F1F5F9"
+borderColor = "#1F293D"
+primaryColor = "#3B82F6"
+linkColor = "#60A5FA"
