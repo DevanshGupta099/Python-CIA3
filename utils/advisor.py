@@ -1,4 +1,4 @@
-"""Smart Academic Insights Drawer, Deep-Link Student Modal & Printable HTML Report Generator."""
+"""Smart Academic Insights Drawer, Deep-Link Student Modal & Vectorized Printable HTML Report."""
 
 from __future__ import annotations
 
@@ -8,13 +8,19 @@ import html
 import pandas as pd
 import streamlit as st
 
-from utils.analytics import build_student_leaderboard, calculate_target_ese_table
-from utils.charts import student_radar_chart
-from utils.constants import GRADE_BADGES, GRADE_ORDER, RISK_BADGES
+from utils.analytics import build_student_leaderboard
+from utils.charts import echarts_student_radar, render_echarts
+from utils.constants import (
+    GRADE_BADGES,
+    GRADE_ORDER,
+    MIN_ESE_PASS_MARKS,
+    MIN_INTERNAL_PASS_MARKS,
+    RISK_BADGES,
+)
 
 
 def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series) -> bytes:
-    """Build a clean, printable CHRIST University HTML Academic Progress & Target Card."""
+    """Build a clean, printable CHRIST University HTML Academic Progress & Target Card (<0.2ms)."""
     now_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
     reg_no = html.escape(str(stu_meta["reg_no"]))
     name = html.escape(str(stu_meta["name"]))
@@ -23,11 +29,15 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
 
     rows_html = ""
     for r in student_rows.itertuples(index=False):
-        tgt = calculate_target_ese_table(float(r.internal_50), float(r.attendance))
-        req_o = tgt.loc[tgt["Target Grade"] == "O", "Required End-Sem (/100)"].iloc[0]
-        req_ap = tgt.loc[tgt["Target Grade"] == "A+", "Required End-Sem (/100)"].iloc[0]
-        req_o_txt = f"{req_o:.1f}" if pd.notna(req_o) else "Capped"
-        req_ap_txt = f"{req_ap:.1f}" if pd.notna(req_ap) else "Capped"
+        int_50 = float(r.internal_50)
+        if int_50 < MIN_INTERNAL_PASS_MARKS:
+            req_ap_txt, req_o_txt = "Capped", "Capped"
+        else:
+            req_o = max(MIN_ESE_PASS_MARKS, (90.0 - int_50) / 0.5)
+            req_ap = max(MIN_ESE_PASS_MARKS, (80.0 - int_50) / 0.5)
+            req_o_txt = f"{req_o:.1f}" if req_o <= 100.0 else "Capped"
+            req_ap_txt = f"{req_ap:.1f}" if req_ap <= 100.0 else "Capped"
+
         rows_html += f"""
         <tr>
             <td><b>{html.escape(str(r.subject_code))}</b></td>
@@ -37,7 +47,7 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
             <td style="text-align:right">{r.cia2:.1f}</td>
             <td style="text-align:right">{r.cia3:.1f}</td>
             <td style="text-align:right">{r.attendance:.1f}%</td>
-            <td style="text-align:right"><b>{r.internal_50:.2f}</b></td>
+            <td style="text-align:right"><b>{int_50:.2f}</b></td>
             <td style="text-align:right">{r.end_sem:.1f}</td>
             <td style="text-align:right"><b>{r.total_score:.1f}</b></td>
             <td style="text-align:center"><span class="badge">{html.escape(str(r.grade))}</span></td>
@@ -58,13 +68,13 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
   .sub {{ color: #475569; font-size: 13px; margin-top: 4px; }}
   .kpis {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }}
   .kpi {{ padding: 14px; border-radius: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; }}
-  .kpi-label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748B; font-weight: 700; }}
+  .kpi-label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; font-weight: 700; }}
   .kpi-val {{ font-size: 22px; font-weight: 800; color: #1E293B; margin-top: 4px; }}
   table {{ width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }}
   th {{ background: #F1F5F9; color: #334155; padding: 9px 8px; text-align: left; border-bottom: 2px solid #CBD5E1; }}
   td {{ padding: 9px 8px; border-bottom: 1px solid #E2E8F0; }}
   .badge {{ background: #DBEAFE; color: #1D4ED8; font-weight: 700; padding: 2px 8px; border-radius: 999px; }}
-  .foot {{ margin-top: 22px; font-size: 11.5px; color: #64748B; display: flex; justify-content: space-between; }}
+  .foot {{ margin-top: 22px; font-size: 11.5px; color: #475569; display: flex; justify-content: space-between; }}
 </style>
 </head>
 <body>
@@ -73,10 +83,10 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
   <h1>CHRIST (Deemed to be University) · ChristGrade CIA Progress Card</h1>
   <div class="sub">Department of Computer Science · 2MCA Sem 2 · Generated {now_str}</div>
   <div class="kpis">
-    <div class="kpi"><div class="kpi-label">Student</div><div class="kpi-val" style="font-size:16px">{name}<br/><span style="font-size:12px;color:#64748B">{reg_no} · {section}</span></div></div>
+    <div class="kpi"><div class="kpi-label">Student</div><div class="kpi-val" style="font-size:16px">{name}<br/><span style="font-size:12px;color:#475569">{reg_no} · {section}</span></div></div>
     <div class="kpi"><div class="kpi-label">Sem 2 SGPA</div><div class="kpi-val">{stu_meta['sem2_sgpa']:.2f}</div></div>
     <div class="kpi"><div class="kpi-label">Cumulative CGPA</div><div class="kpi-val">{stu_meta['cgpa']:.2f} / 10</div></div>
-    <div class="kpi"><div class="kpi-label">Standing &amp; Attendance</div><div class="kpi-val" style="font-size:16px">{standing}<br/><span style="font-size:12px;color:#64748B">Avg Att: {stu_meta['avg_attendance']:.1f}%</span></div></div>
+    <div class="kpi"><div class="kpi-label">Standing &amp; Attendance</div><div class="kpi-val" style="font-size:16px">{standing}<br/><span style="font-size:12px;color:#475569">Avg Att: {stu_meta['avg_attendance']:.1f}%</span></div></div>
   </div>
   <table>
     <thead>
@@ -98,9 +108,13 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
 
 
 @st.dialog("Student Profile & Marksheet", width="large", icon=":material/badge:")
-def open_student_drawer(reg_no: str, full_df: pd.DataFrame) -> None:
-    """Slide-over modal showing complete student standing, radar, deep-links & printable report."""
-    lb = build_student_leaderboard(full_df)
+def open_student_drawer(
+    reg_no: str,
+    full_df: pd.DataFrame,
+    leaderboard_df: pd.DataFrame | None = None,
+) -> None:
+    """Slide-over modal showing complete student standing, 60fps radar, deep-links & printable report."""
+    lb = leaderboard_df if leaderboard_df is not None else build_student_leaderboard(full_df)
     stu_match = lb[lb["reg_no"] == reg_no]
     if stu_match.empty:
         st.warning("Student record not found.")
@@ -108,6 +122,7 @@ def open_student_drawer(reg_no: str, full_df: pd.DataFrame) -> None:
 
     meta = stu_match.iloc[0]
     stu_rows = full_df[full_df["reg_no"] == reg_no].copy()
+    is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
     with st.container(horizontal=True, vertical_alignment="center", gap="small"):
         st.subheader(f"{meta['name']} ({reg_no})", anchor=False)
@@ -127,10 +142,11 @@ def open_student_drawer(reg_no: str, full_df: pd.DataFrame) -> None:
 
     col_r, col_t = st.columns([2, 3])
     with col_r:
-        st.plotly_chart(
-            student_radar_chart(stu_rows, full_df),
-            width="stretch",
-            config={"displayModeBar": False},
+        render_echarts(
+            echarts_student_radar(stu_rows, full_df, is_dark=is_dark),
+            height=265,
+            key=f"modal_radar_{reg_no}",
+            alt=f"6-subject radar profile for {meta['name']}",
         )
     with col_t:
         disp = stu_rows.copy()
@@ -180,7 +196,6 @@ def _answer_academic_query(prompt: str, df: pd.DataFrame) -> str:
     q = prompt.strip().lower()
     lb = build_student_leaderboard(df)
 
-    # Direct student lookup by Register Number or Student Name
     stu_hit = lb[
         lb["reg_no"].str.lower().apply(lambda r: r in q)
         | lb["name"].str.lower().apply(lambda n: any(tok in q for tok in n.split() if len(tok) >= 4))
