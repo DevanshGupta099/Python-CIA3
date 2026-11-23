@@ -13,6 +13,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+import streamlit as st
 
 from utils.constants import (
     GRADE_POINTS,
@@ -26,6 +27,7 @@ from utils.constants import (
     SUBJECT_CODES,
     TARGET_GRADES,
 )
+from utils.database import load_raw_assessments
 
 
 @dataclass(frozen=True)
@@ -151,6 +153,16 @@ def enrich_assessments(raw_df: pd.DataFrame) -> pd.DataFrame:
     )
 
     return df
+
+
+@st.cache_data(show_spinner=False)
+def load_enriched_cached(db_version: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Fast in-memory cached loader returning (enriched_df, full_leaderboard_df) keyed by db_version."""
+    _ = db_version
+    raw = load_raw_assessments()
+    enriched = enrich_assessments(raw)
+    lb = build_student_leaderboard(enriched)
+    return enriched, lb
 
 
 def apply_global_filters(df: pd.DataFrame, filters: GlobalFilters) -> pd.DataFrame:

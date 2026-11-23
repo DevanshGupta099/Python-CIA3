@@ -1,4 +1,4 @@
-"""Live CIA Marks Manager: Full CRUD (Create, Read, Update, Delete), Validations & Live Sync."""
+"""Live CIA Marks Manager: Full CRUD (Student + Marks), Validations, Fragment Search & Live Sync."""
 
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ from utils.database import (
     delete_assessment_record,
     delete_student_profile,
     fetch_google_sheets_dataframe,
-    get_audit_log_df,
+    get_audit_log_cached,
+    get_db_version,
     init_database,
     sync_validated_dataframe,
     upsert_student_assessment,
@@ -28,20 +29,20 @@ from utils.ui import card_header, render_hero_strip
 from utils.validators import validate_assessment_scores, validate_imported_dataframe, validate_student_record
 
 full_df: pd.DataFrame = st.session_state["full_df"]
-audit_df_top = get_audit_log_df(limit=25)
+audit_df_top = get_audit_log_cached(get_db_version(), limit=25)
 
 render_hero_strip(
     eyebrow="SQLite3 Persistence · Strict Input Validation · Google Sheets / CSV Live Sync",
     title="CIA Marks & Student Records Manager (Full CRUD)",
     subtitle=(
-        "Create new student CIA records, update marks via validated forms or inline spreadsheet "
-        "editors, remove records with confirmation guards, or sync live CSV / Google Sheets data."
+        "Create new student CIA records, update student profiles & marks via validated forms or inline "
+        "spreadsheet editors, delete safely, or sync live CSV / Google Sheets data."
     ),
     chips=[
         f"{full_df['reg_no'].nunique()} Stored Students",
         f"{len(full_df)} Subject Assessments",
         f"{len(audit_df_top)} Recent Audit Events",
-        "Regex + Bound Validated",
+        "Instant Cache Sync",
     ],
 )
 
@@ -136,18 +137,20 @@ with tab_create:
                 else:
                     st.error(msg, icon=":material/warning:")
 
+
 # ---------------------------------------------------------------------------
-# Tab 2: READ & UPDATE — Search, Form Update, or Spreadsheet Inline Bulk Edit
+# Tab 2: READ & UPDATE — Fragment-Accelerated Search, Inline & Profile+Marks Edit
 # ---------------------------------------------------------------------------
-with tab_update:
+@st.fragment
+def _frag_read_and_update(df_all: pd.DataFrame) -> None:
     with st.container(border=True):
         u_ctrl = card_header(
-            "Search, Inspect & Update CIA Marks",
-            "Filter records instantaneously and edit via validated Single-Record Form or Inline Table Editor",
+            "Search, Inspect & Update Student Profiles & Marks",
+            "Filter records instantaneously and edit via Inline Spreadsheet or Complete Record Form",
         )
         edit_mode = u_ctrl.segmented_control(
             "Edit Style",
-            ["Inline Spreadsheet Editor", "Single Record Form"],
+            ["Inline Spreadsheet Editor", "Single Record & Profile Form"],
             default="Inline Spreadsheet Editor",
             required=True,
             key="crud_edit_style",
@@ -168,7 +171,7 @@ with tab_update:
             key="crud_sub_flt",
         )
 
-        view_df = full_df.copy()
+        view_df = df_all.copy()
         if q_search.strip():
             needle = q_search.strip().lower()
             view_df = view_df[
@@ -273,6 +276,16 @@ with tab_update:
             cur_row = view_df[view_df["assessment_id"] == chosen_id].iloc[0]
 
             with st.form("crud_single_update_form"):
+                p1, p2, p3, p4 = st.columns([1.8, 1.1, 2.0, 1.1])
+                up_name = p1.text_input("Student Name *", value=str(cur_row["name"]))
+                up_sec = p2.selectbox(
+                    "Cohort *",
+                    options=list(SECTIONS),
+                    index=list(SECTIONS).index(str(cur_row["section"])),
+                )
+                up_mail = p3.text_input("University Email *", value=str(cur_row["email"]))
+                up_sem1 = p4.number_input("Sem 1 SGPA *", 0.0, 10.0, float(cur_row["sem1_sgpa"]), 0.1)
+
                 u1, u2, u3, u4, u5 = st.columns(5)
                 up_cia1 = u1.number_input("CIA 1 (/20)", 0.0, 20.0, float(cur_row["cia1"]), 0.5)
                 up_cia2 = u2.number_input("Mid-Sem (/50)", 0.0, 50.0, float(cur_row["cia2"]), 0.5)
@@ -280,13 +293,13 @@ with tab_update:
                 up_att = u4.number_input("Attendance %", 0.0, 100.0, float(cur_row["attendance"]), 0.5)
                 up_ese = u5.number_input("End-Sem (/100)", 0.0, 100.0, float(cur_row["end_sem"]), 1.0)
 
-                if st.form_submit_button("Update Assessment", type="primary", icon=":material/check:"):
+                if st.form_submit_button("Update Profile & Assessment", type="primary", icon=":material/check:"):
                     ok, errs, cleaned = validate_student_record(
                         reg_no=cur_row["reg_no"],
-                        name=cur_row["name"],
-                        section=cur_row["section"],
-                        email=cur_row["email"],
-                        sem1_sgpa=cur_row["sem1_sgpa"],
+                        name=up_name,
+                        section=up_sec,
+                        email=up_mail,
+                        sem1_sgpa=up_sem1,
                         subject_code=cur_row["subject_code"],
                         cia1=up_cia1,
                         cia2=up_cia2,
@@ -301,6 +314,10 @@ with tab_update:
                         _, msg = upsert_student_assessment(cleaned, allow_overwrite=True)
                         st.toast(msg, icon=":material/check_circle:")
                         st.rerun()
+
+
+with tab_update:
+    _frag_read_and_update(full_df)
 
 # ---------------------------------------------------------------------------
 # Tab 3: DELETE — Safe Record or Full Student Profile Removal

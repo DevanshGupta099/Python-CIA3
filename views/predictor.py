@@ -1,4 +1,4 @@
-"""End-Semester Target Score & CGPA Predictor (Formula Engine + scikit-learn ML)."""
+"""End-Semester Target Score & CGPA Predictor (Fragment-Isolated Formula Engine + scikit-learn ML)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import streamlit as st
 
 from utils.analytics import (
     attendance_to_marks,
-    build_student_leaderboard,
     calculate_target_ese_table,
     predict_ese_score,
     recommend_sgpa_plan,
@@ -28,7 +27,14 @@ from utils.constants import (
 from utils.ui import card_header, render_hero_strip, section_header
 
 full_df: pd.DataFrame = st.session_state["full_df"]
-leaderboard = build_student_leaderboard(full_df)
+leaderboard: pd.DataFrame = st.session_state["full_leaderboard"]
+
+# Handle incoming deep-link from Overview or Student Radar
+jumped_pred_reg = st.session_state.pop("_jump_pred_reg", None)
+if jumped_pred_reg:
+    st.session_state["pred_input_src"] = "Student Record"
+    st.session_state["pred_stu_reg"] = jumped_pred_reg
+    st.session_state["sgpa_plan_reg"] = jumped_pred_reg
 
 
 @st.cache_resource(show_spinner=False)
@@ -43,13 +49,13 @@ render_hero_strip(
     title="End-Semester Target Score & Semester CGPA Planner",
     subtitle=(
         "Compute the exact End-Semester Exam marks (/100) required for O, A+, A, or target SGPA/CGPA, "
-        "paired with cross-validated Ridge & Random Forest regression forecasts."
+        "with instant fragment-isolated slider response and cross-validated ML forecasts."
     ),
     chips=[
         f"5-Fold CV R² = {ml_bundle.r2_cv:.2f}",
         f"MAE = ±{ml_bundle.mae_cv:.1f} pts",
         "Ridge + Random Forest Ensemble",
-        "22-Credit SGPA Optimizer",
+        "Instant Slider Response",
     ],
 )
 
@@ -62,7 +68,9 @@ mode = st.segmented_control(
     label_visibility="collapsed",
 )
 
-if mode == "Subject Target Grade Predictor":
+
+@st.fragment
+def _render_subject_predictor() -> None:
     actions = section_header(
         "Subject End-Sem Score Calculator & ML Forecast",
         help_text="Syncs from an existing student record or custom live sliders.",
@@ -88,11 +96,14 @@ if mode == "Subject Target Grade Predictor":
             r.reg_no: f"{r.reg_no} · {r.name} ({r.section})"
             for r in leaderboard.itertuples(index=False)
         }
+        stu_opts = leaderboard["reg_no"].tolist()
+        if st.session_state.get("pred_stu_reg") not in stu_opts and stu_opts:
+            st.session_state["pred_stu_reg"] = stu_opts[0]
 
         if input_source == "Student Record":
             sel_reg = top_c2.selectbox(
                 "Student",
-                options=leaderboard["reg_no"].tolist(),
+                options=stu_opts,
                 format_func=lambda r: stu_labels.get(r, r),
                 key="pred_stu_reg",
             )
@@ -118,6 +129,7 @@ if mode == "Subject Target Grade Predictor":
                 def_att, def_sem1 = float(r0["attendance"]), float(r0["sem1_sgpa"])
             else:
                 def_cia1, def_cia2, def_cia3, def_att, def_sem1 = 15.0, 36.0, 16.0, 90.0, 7.8
+            scope_id = f"{sel_reg}_{sel_sub}"
         else:
             sel_sub = top_c2.selectbox(
                 "MCA Subject",
@@ -135,13 +147,23 @@ if mode == "Subject Target Grade Predictor":
                 "Sem 1 SGPA", min_value=4.0, max_value=10.0, value=8.0, step=0.1
             )
             def_cia1, def_cia2, def_cia3, def_att = 16.0, 38.0, 17.0, 91.0
+            scope_id = f"custom_{sel_sub}"
 
         st.divider()
-        s1, s2, s3, s4, s5 = st.columns([1, 1, 1, 1, 1.3])
-        cia1_val = s1.slider("CIA 1 (/20)", 0.0, 20.0, float(def_cia1), 0.5)
-        cia2_val = s2.slider("Mid-Sem CIA 2 (/50)", 0.0, 50.0, float(def_cia2), 0.5)
-        cia3_val = s3.slider("CIA 3 Assign. (/20)", 0.0, 20.0, float(def_cia3), 0.5)
-        att_val = s4.slider("Attendance (%)", 50.0, 100.0, float(def_att), 0.5)
+        reset_ver = int(st.session_state.get("_pred_slider_ver", 0))
+        s1, s2, s3, s4, s5 = st.columns([1, 1, 1, 1, 1.35])
+        cia1_val = s1.slider(
+            "CIA 1 (/20)", 0.0, 20.0, float(def_cia1), 0.5, key=f"pc1_{scope_id}_{reset_ver}"
+        )
+        cia2_val = s2.slider(
+            "Mid-Sem CIA 2 (/50)", 0.0, 50.0, float(def_cia2), 0.5, key=f"pc2_{scope_id}_{reset_ver}"
+        )
+        cia3_val = s3.slider(
+            "CIA 3 Assign. (/20)", 0.0, 20.0, float(def_cia3), 0.5, key=f"pc3_{scope_id}_{reset_ver}"
+        )
+        att_val = s4.slider(
+            "Attendance (%)", 50.0, 100.0, float(def_att), 0.5, key=f"patt_{scope_id}_{reset_ver}"
+        )
         model_choice = s5.selectbox(
             "ML Estimator",
             [
@@ -151,6 +173,13 @@ if mode == "Subject Target Grade Predictor":
             ],
             key="pred_ml_algo",
         )
+        if st.button(
+            "Reset Sliders to Record Baseline",
+            icon=":material/restart_alt:",
+            type="tertiary",
+        ):
+            st.session_state["_pred_slider_ver"] = reset_ver + 1
+            st.rerun(scope="fragment")
 
     att_marks = float(attendance_to_marks(att_val))
     internal_50 = round(0.5 * cia1_val + 0.5 * cia2_val + 0.5 * cia3_val + att_marks, 2)
@@ -279,7 +308,9 @@ if mode == "Subject Target Grade Predictor":
             config={"displayModeBar": False},
         )
 
-else:
+
+@st.fragment
+def _render_sgpa_planner() -> None:
     actions = section_header(
         "Credit-Weighted Semester SGPA & CGPA Planner",
         help_text="Allocates optimal End-Sem target scores across all 6 subjects (22 credits).",
@@ -291,9 +322,13 @@ else:
             r.reg_no: f"{r.reg_no} · {r.name} ({r.section} · Sem 1 SGPA: {r.sem1_sgpa:.2f})"
             for r in leaderboard.itertuples(index=False)
         }
+        stu_opts = leaderboard["reg_no"].tolist()
+        if st.session_state.get("sgpa_plan_reg") not in stu_opts and stu_opts:
+            st.session_state["sgpa_plan_reg"] = stu_opts[0]
+
         plan_reg = p1.selectbox(
             "Select Student",
-            options=leaderboard["reg_no"].tolist(),
+            options=stu_opts,
             format_func=lambda r: stu_labels.get(r, r),
             key="sgpa_plan_reg",
         )
@@ -393,3 +428,9 @@ else:
             hide_index=True,
             width="stretch",
         )
+
+
+if mode == "Subject Target Grade Predictor":
+    _render_subject_predictor()
+else:
+    _render_sgpa_planner()

@@ -1,4 +1,4 @@
-"""Solaris Editorial UI Design System: elevated Bento cards, mesh banners, drawers & headers."""
+"""Solaris Editorial UI Design System: 60fps spring animations, Bento cards, mesh banners & headers."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ VERIFIED_BADGE = ":blue-badge[:material/verified:]"
 
 
 def inject_custom_css(is_dark: bool = False) -> None:
-    """Inject theme-aware Solaris Editorial CSS (Royal Cobalt x Sunset Coral x Gold)."""
+    """Inject theme-aware Solaris Editorial CSS with GPU-accelerated transitions & anti-flicker."""
     card_bg = "#121726" if is_dark else "#FFFFFF"
     card_border = "rgba(148, 163, 184, 0.16)" if is_dark else "rgba(15, 23, 42, 0.08)"
     card_shadow = (
@@ -23,20 +23,20 @@ def inject_custom_css(is_dark: bool = False) -> None:
         if is_dark
         else "0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(15, 23, 42, 0.06)"
     )
-    hover_border = "rgba(59, 130, 246, 0.45)" if is_dark else "rgba(37, 99, 235, 0.34)"
+    hover_border = "rgba(59, 130, 246, 0.48)" if is_dark else "rgba(37, 99, 235, 0.36)"
     hover_shadow = (
-        "0 10px 28px -6px rgba(37, 99, 235, 0.22)"
+        "0 12px 30px -6px rgba(37, 99, 235, 0.25)"
         if is_dark
-        else "0 12px 28px -8px rgba(37, 99, 235, 0.13)"
+        else "0 14px 30px -8px rgba(37, 99, 235, 0.14)"
     )
     hero_bg = (
-        "radial-gradient(circle at 8% 15%, rgba(59, 130, 246, 0.22), transparent 45%), "
-        "radial-gradient(circle at 88% 20%, rgba(244, 63, 94, 0.19), transparent 42%), "
-        "radial-gradient(circle at 75% 90%, rgba(249, 115, 22, 0.16), transparent 45%), "
+        "radial-gradient(circle at 8% 15%, rgba(59, 130, 246, 0.24), transparent 45%), "
+        "radial-gradient(circle at 88% 20%, rgba(244, 63, 94, 0.20), transparent 42%), "
+        "radial-gradient(circle at 75% 90%, rgba(249, 115, 22, 0.17), transparent 45%), "
         "linear-gradient(135deg, #101626 0%, #161D31 100%)"
         if is_dark
-        else "radial-gradient(circle at 6% 15%, rgba(37, 99, 235, 0.11), transparent 42%), "
-        "radial-gradient(circle at 90% 18%, rgba(225, 29, 72, 0.09), transparent 40%), "
+        else "radial-gradient(circle at 6% 15%, rgba(37, 99, 235, 0.12), transparent 42%), "
+        "radial-gradient(circle at 90% 18%, rgba(225, 29, 72, 0.10), transparent 40%), "
         "radial-gradient(circle at 76% 92%, rgba(249, 115, 22, 0.10), transparent 45%), "
         "linear-gradient(135deg, #FFFFFF 0%, #FBFBFD 100%)"
     )
@@ -48,7 +48,36 @@ def inject_custom_css(is_dark: bool = False) -> None:
     st.markdown(
         f"""
         <style>
-        /* Signature Solaris top gradient ribbon */
+        /* Keyframes: Flowing Solaris Ribbon & Smooth Spring Reveal */
+        @keyframes cgAuroraShift {{
+            0%   {{ background-position: 0% 50%; }}
+            50%  {{ background-position: 100% 50%; }}
+            100% {{ background-position: 0% 50%; }}
+        }}
+
+        @keyframes cgRevealUp {{
+            from {{
+                opacity: 0;
+                transform: translate3d(0, 10px, 0);
+            }}
+            to {{
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }}
+        }}
+
+        @keyframes cgPulseDot {{
+            0%, 100% {{ transform: scale(1); opacity: 1; }}
+            50%      {{ transform: scale(1.35); opacity: 0.72; }}
+        }}
+
+        /* Eliminate harsh Streamlit grey-out dim during Cloud network reruns */
+        [data-stale="true"] {{
+            opacity: 0.90 !important;
+            transition: opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1) !important;
+        }}
+
+        /* Animated Solaris top gradient ribbon */
         header[data-testid="stHeader"]::before {{
             content: "";
             position: fixed;
@@ -56,24 +85,41 @@ def inject_custom_css(is_dark: bool = False) -> None:
             left: 0;
             right: 0;
             height: 3.5px;
-            background: linear-gradient(90deg, #1D4ED8 0%, #2563EB 30%, #E11D48 68%, #F97316 88%, #F59E0B 100%);
+            background: linear-gradient(
+                90deg,
+                #1D4ED8 0%,
+                #2563EB 25%,
+                #E11D48 52%,
+                #F97316 76%,
+                #F59E0B 90%,
+                #2563EB 100%
+            );
+            background-size: 220% 100%;
+            animation: cgAuroraShift 9s ease-in-out infinite;
             z-index: 999999;
         }}
 
-        /* Elevated Bento Card Surfaces */
-        div[data-testid="stVerticalBlockBorderWrapper"] {{
+        /* Elevated Bento Card Surfaces (supports all Streamlit 1.40 - 1.67 DOM wrappers) */
+        div[data-testid="stVerticalBlockBorderWrapper"],
+        div[data-testid="stVerticalBlock"][style*="border"] {{
             background: {card_bg};
             border: 1px solid {card_border} !important;
             border-radius: 16px !important;
             box-shadow: {card_shadow};
-            transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            animation: cgRevealUp 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+            will-change: transform, box-shadow;
+            transition:
+                transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.22s ease,
+                box-shadow 0.22s ease;
         }}
-        div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover,
+        div[data-testid="stVerticalBlock"][style*="border"]:hover {{
             border-color: {hover_border} !important;
             box-shadow: {hover_shadow};
         }}
 
-        /* Elevated KPI Metric Cards with top Solaris gradient accent */
+        /* Elevated KPI Metric Cards with staggered entrance & spring hover */
         div[data-testid="stMetric"] {{
             background: {card_bg};
             border: 1px solid {card_border} !important;
@@ -82,7 +128,12 @@ def inject_custom_css(is_dark: bool = False) -> None:
             position: relative;
             overflow: hidden;
             font-variant-numeric: tabular-nums;
-            transition: transform 0.18s ease, box-shadow 0.2s ease;
+            animation: cgRevealUp 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+            will-change: transform, box-shadow;
+            transition:
+                transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.22s ease,
+                border-color 0.22s ease;
         }}
         div[data-testid="stMetric"]::before {{
             content: "";
@@ -94,20 +145,46 @@ def inject_custom_css(is_dark: bool = False) -> None:
             background: linear-gradient(90deg, #2563EB 0%, #E11D48 55%, #F97316 100%);
         }}
         div[data-testid="stMetric"]:hover {{
-            transform: translateY(-2px);
+            transform: translate3d(0, -3px, 0);
+            border-color: {hover_border} !important;
             box-shadow: {hover_shadow};
+        }}
+
+        /* Smooth Chart & Dataframe Fade-In */
+        div[data-testid="stPlotlyChart"],
+        div[data-testid="stDataFrame"] {{
+            animation: cgRevealUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }}
+
+        /* Tactile Button & Pill Micro-Interactions */
+        .stButton > button,
+        .stDownloadButton > button {{
+            transition:
+                transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.18s ease,
+                background-color 0.18s ease,
+                border-color 0.18s ease !important;
+        }}
+        .stButton > button:hover,
+        .stDownloadButton > button:hover {{
+            transform: translate3d(0, -1px, 0);
+        }}
+        .stButton > button:active,
+        .stDownloadButton > button:active {{
+            transform: translate3d(0, 0.5px, 0) scale(0.985);
         }}
 
         /* Editorial Sunrise Mesh Hero Card */
         .cg-solaris-hero {{
             position: relative;
-            padding: 1.25rem 1.5rem;
+            padding: 1.2rem 1.45rem;
             border-radius: 18px;
             border: 1px solid {hero_border};
             background: {hero_bg};
             box-shadow: {card_shadow};
-            margin-bottom: 0.9rem;
+            margin-bottom: 0.85rem;
             overflow: hidden;
+            animation: cgRevealUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
         }}
         .cg-solaris-eyebrow {{
             display: inline-block;
@@ -118,17 +195,17 @@ def inject_custom_css(is_dark: bool = False) -> None:
             background: linear-gradient(90deg, #2563EB 0%, #E11D48 60%, #F97316 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.28rem;
+            margin-bottom: 0.25rem;
         }}
         .cg-solaris-title {{
-            font-size: 1.32rem;
+            font-size: 1.3rem;
             font-weight: 800;
             letter-spacing: -0.025em;
             line-height: 1.28;
-            margin: 0 0 0.3rem 0;
+            margin: 0 0 0.28rem 0;
         }}
         .cg-solaris-sub {{
-            font-size: 0.87rem;
+            font-size: 0.865rem;
             color: {muted_text};
             margin: 0;
             max-width: 920px;
@@ -138,12 +215,12 @@ def inject_custom_css(is_dark: bool = False) -> None:
             display: flex;
             flex-wrap: wrap;
             gap: 0.45rem;
-            margin-top: 0.75rem;
+            margin-top: 0.72rem;
         }}
         .cg-chip {{
             display: inline-flex;
             align-items: center;
-            gap: 0.32rem;
+            gap: 0.35rem;
             padding: 0.22rem 0.68rem;
             border-radius: 999px;
             font-size: 0.74rem;
@@ -151,12 +228,18 @@ def inject_custom_css(is_dark: bool = False) -> None:
             background: {pill_bg};
             color: {pill_text};
             border: 1px solid {card_border};
+            transition: transform 0.16s ease, border-color 0.16s ease;
+        }}
+        .cg-chip:hover {{
+            transform: translateY(-1px);
+            border-color: {hover_border};
         }}
         .cg-chip-dot {{
-            width: 6px;
-            height: 6px;
+            width: 6.5px;
+            height: 6.5px;
             border-radius: 50%;
             background: linear-gradient(135deg, #2563EB, #E11D48);
+            animation: cgPulseDot 2.8s ease-in-out infinite;
         }}
 
         /* Modernized Tabs */
@@ -164,6 +247,7 @@ def inject_custom_css(is_dark: bool = False) -> None:
             font-weight: 600 !important;
             padding-top: 0.55rem !important;
             padding-bottom: 0.55rem !important;
+            transition: color 0.18s ease, background-color 0.18s ease !important;
         }}
 
         /* Subtle Footer */
@@ -178,6 +262,15 @@ def inject_custom_css(is_dark: bool = False) -> None:
             font-size: 0.77rem;
             color: {muted_text};
         }}
+
+        /* Accessibility: respect reduced-motion OS setting */
+        @media (prefers-reduced-motion: reduce) {{
+            *, *::before, *::after {{
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }}
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -190,7 +283,7 @@ def render_hero_strip(
     subtitle: str,
     chips: list[str] | None = None,
 ) -> None:
-    """Render an elevated Solaris mesh hero card with optional live status chips."""
+    """Render an elevated Solaris mesh hero card with live animated status chips."""
     chips_html = ""
     if chips:
         items = "".join(
