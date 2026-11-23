@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +10,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
+import streamlit as st
 
 from utils.constants import (
     GRADE_COLORS,
@@ -38,6 +40,7 @@ _BASE_LAYOUT = dict(
     font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
     margin=dict(l=8, r=12, t=36, b=8),
     hoverlabel=dict(bordercolor="rgba(0,0,0,0)", font_size=12),
+    transition=dict(duration=380, easing="cubic-in-out"),
 )
 
 
@@ -689,3 +692,17 @@ def seaborn_statistical_figure(
 
     fig.tight_layout()
     return fig
+
+
+@st.cache_data(show_spinner=False, max_entries=24)
+def render_seaborn_png_cached(
+    plot_df: pd.DataFrame,
+    mode: str,
+    is_dark: bool,
+) -> bytes:
+    """Cache rasterized Seaborn statistical figure as crisp PNG bytes for <1ms repeat renders."""
+    fig = seaborn_statistical_figure(plot_df, mode=mode, is_dark=is_dark)
+    buf = BytesIO()
+    fig.savefig(buf, format="png", dpi=145, bbox_inches="tight", transparent=True)
+    plt.close(fig)
+    return buf.getvalue()

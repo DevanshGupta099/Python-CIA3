@@ -34,6 +34,7 @@ from utils.charts import (
     grade_distribution_chart,
     ml_feature_importance_chart,
     predictor_feasibility_curve,
+    render_seaborn_png_cached,
     seaborn_statistical_figure,
     semester_gpa_trend_chart,
     student_radar_chart,
@@ -167,9 +168,25 @@ def test_analytics_advisor_and_charts() -> None:
     html_bytes = generate_student_html_report(stu_df, stu_meta)
     assert b"ChristGrade CIA Progress Card" in html_bytes and b"2547101" in html_bytes
 
-    for q in ("Executive summary", "Toughest subjects", "Attendance < 85%", "Compare 2MCA-A", "Top 5"):
+    for q in (
+        "Executive summary",
+        "Toughest subjects",
+        "Attendance < 85%",
+        "CIA3 top improvers",
+        "Devansh",
+        "2547101",
+        "Compare 2MCA-A",
+        "Top 5",
+    ):
         ans = _answer_academic_query(q, df)
         assert len(ans) > 30
+
+    sb_cols = [
+        "section", "cia1_pct", "cia2_pct", "cia3_pct",
+        "attendance", "internal_50", "end_sem", "total_score",
+    ]
+    png_bytes = render_seaborn_png_cached(df[sb_cols], "Correlation Heatmap", False)
+    assert png_bytes.startswith(b"\x89PNG") and len(png_bytes) > 5000
 
     grp = build_groupby_summary(df, ["section", "subject_code"])
     assert len(grp) == 12 and "IQR_Total" in grp.columns

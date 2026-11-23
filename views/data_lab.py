@@ -1,4 +1,4 @@
-"""Data Manipulation Studio: Dynamic Graph Explorer, GroupBy, Pivot, Outliers & Policy Simulator."""
+"""Data Manipulation Studio: Fragment-Isolated Graph Explorer, GroupBy, Pivot, Outliers & Policy Sim."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ render_hero_strip(
         "6 Dynamic Chart Types",
         "Multi-Metric GroupBy & IQR",
         "Pivot & Cross-Tab Heatmaps",
-        "Faculty Moderation Simulator",
+        "Instant Fragment Studio",
     ],
 )
 
@@ -39,9 +39,6 @@ if base_df.empty:
     st.warning("No records match the active global filters. Click **Reset** above.")
     st.stop()
 
-# ---------------------------------------------------------------------------
-# Dynamic Range Slicers (Directly Manipulates All Graphs & Tables Below)
-# ---------------------------------------------------------------------------
 with st.container(border=True):
     card_header(
         "Live Data Slicers (Manipulates All Charts & Aggregations Below)",
@@ -79,16 +76,6 @@ if sliced_df.empty:
     st.info("Widen the numeric sliders above to include assessment records.", icon=":material/tune:")
     st.stop()
 
-tab_viz, tab_group, tab_pivot, tab_norm, tab_sim = st.tabs(
-    [
-        ":material/bar_chart: Interactive Graph Explorer",
-        ":material/functions: GroupBy & Aggregations",
-        ":material/grid_on: Pivot & Cross-Tab Builder",
-        ":material/analytics: Z-Scores & Outlier Detection",
-        ":material/tune: Faculty Policy Simulator",
-    ]
-)
-
 METRIC_OPTIONS = {
     "internal_50": "Internal CIA (/50)",
     "end_sem": "End-Semester (/100)",
@@ -107,10 +94,9 @@ COLOR_DIMS = {
     "subject_short": "MCA Subject",
 }
 
-# ---------------------------------------------------------------------------
-# Tab 1: Interactive Multi-Type Graph Manipulator
-# ---------------------------------------------------------------------------
-with tab_viz:
+
+@st.fragment
+def _frag_graph_explorer(df_in: pd.DataFrame) -> None:
     with st.container(border=True):
         c1, c2, c3, c4 = st.columns([1.6, 1.3, 1.3, 1.3])
         chart_kind = c1.selectbox(
@@ -147,7 +133,7 @@ with tab_viz:
 
         if chart_kind == "Scatter + OLS Regression Line":
             fig = px.scatter(
-                sliced_df,
+                df_in,
                 x=x_col,
                 y=y_col,
                 color=color_dim,
@@ -159,9 +145,9 @@ with tab_viz:
                 labels={**METRIC_OPTIONS, **COLOR_DIMS},
                 opacity=0.84,
             )
-            if len(sliced_df) >= 2 and sliced_df[x_col].nunique() > 1:
-                xv = sliced_df[x_col].to_numpy(dtype=float)
-                yv = sliced_df[y_col].to_numpy(dtype=float)
+            if len(df_in) >= 2 and df_in[x_col].nunique() > 1:
+                xv = df_in[x_col].to_numpy(dtype=float)
+                yv = df_in[y_col].to_numpy(dtype=float)
                 slope, intercept = np.polyfit(xv, yv, 1)
                 xs = np.linspace(float(xv.min()), float(xv.max()), 50)
                 fig.add_trace(
@@ -175,7 +161,7 @@ with tab_viz:
                 )
         elif chart_kind == "Box Quartile Comparison":
             fig = px.box(
-                sliced_df,
+                df_in,
                 x="subject_short",
                 y=y_col,
                 color=color_dim,
@@ -186,7 +172,7 @@ with tab_viz:
             )
         elif chart_kind == "Violin Density Split":
             fig = px.violin(
-                sliced_df,
+                df_in,
                 x="subject_short",
                 y=y_col,
                 color=color_dim,
@@ -197,7 +183,7 @@ with tab_viz:
             )
         elif chart_kind == "Distribution Histogram":
             fig = px.histogram(
-                sliced_df,
+                df_in,
                 x=x_col,
                 color=color_dim,
                 nbins=22,
@@ -210,7 +196,7 @@ with tab_viz:
             )
         elif chart_kind == "Sunburst Hierarchy":
             fig = px.sunburst(
-                sliced_df,
+                df_in,
                 path=["section", "subject_short", "grade"],
                 values="total_score",
                 color="total_score",
@@ -218,7 +204,7 @@ with tab_viz:
             )
         else:
             ranked = (
-                sliced_df.groupby("subject_short", as_index=False)[y_col]
+                df_in.groupby("subject_short", as_index=False)[y_col]
                 .mean()
                 .sort_values(y_col, ascending=True)
                 .round(2)
@@ -240,13 +226,13 @@ with tab_viz:
             plot_bgcolor="rgba(0,0,0,0)",
             margin=dict(l=8, r=12, t=28, b=8),
             height=410,
+            transition=dict(duration=360, easing="cubic-in-out"),
         )
         st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
-# ---------------------------------------------------------------------------
-# Tab 2: GroupBy & Multi-Metric Aggregations
-# ---------------------------------------------------------------------------
-with tab_group:
+
+@st.fragment
+def _frag_groupby(df_in: pd.DataFrame) -> None:
     with st.container(border=True):
         card_header(
             "Pandas Multi-Column GroupBy & Dispersion Statistics",
@@ -260,7 +246,7 @@ with tab_group:
         if not group_dims:
             st.info("Select at least one grouping column.")
         else:
-            grp_df = build_groupby_summary(sliced_df, group_dims)
+            grp_df = build_groupby_summary(df_in, group_dims)
             st.dataframe(grp_df, hide_index=True, width="stretch")
             st.download_button(
                 "Download GroupBy Summary CSV",
@@ -270,10 +256,9 @@ with tab_group:
                 icon=":material/download:",
             )
 
-# ---------------------------------------------------------------------------
-# Tab 3: Pivot Table & Cross-Tabulation Matrix + Heatmap
-# ---------------------------------------------------------------------------
-with tab_pivot:
+
+@st.fragment
+def _frag_pivot(df_in: pd.DataFrame) -> None:
     with st.container(border=True):
         card_header(
             "Dynamic Pivot Table & Cross-Tabulation Matrix",
@@ -297,7 +282,7 @@ with tab_pivot:
         if idx_col == col_col:
             st.warning("Choose distinct Row Index and Column Header fields to pivot.")
         else:
-            piv_df = build_pivot_matrix(sliced_df, idx_col, col_col, val_col, agg_fn)
+            piv_df = build_pivot_matrix(df_in, idx_col, col_col, val_col, agg_fn)
             pv_left, pv_right = st.columns([3, 2])
             with pv_left:
                 st.dataframe(piv_df, width="stretch")
@@ -315,13 +300,13 @@ with tab_pivot:
                     margin=dict(l=4, r=4, t=16, b=4),
                     height=290,
                     coloraxis_showscale=False,
+                    transition=dict(duration=340, easing="cubic-in-out"),
                 )
                 st.plotly_chart(fig_hm, width="stretch", config={"displayModeBar": False})
 
-# ---------------------------------------------------------------------------
-# Tab 4: Min-Max Normalization, Z-Scores & 1.5x IQR Outlier Detection
-# ---------------------------------------------------------------------------
-with tab_norm:
+
+@st.fragment
+def _frag_outliers(df_in: pd.DataFrame) -> None:
     with st.container(border=True):
         card_header(
             "Feature Scaling (Min-Max & Z-Score) and 1.5×IQR Outlier Slicer",
@@ -341,7 +326,7 @@ with tab_norm:
             required=True,
         )
 
-        norm_df = compute_normalized_and_outliers(sliced_df, norm_metric)
+        norm_df = compute_normalized_and_outliers(df_in, norm_metric)
         if slice_mode == "IQR Outliers Only":
             norm_df = norm_df[norm_df["iqr_outlier"] != "Normal Range"]
         elif slice_mode == "Top 10% Decile":
@@ -370,10 +355,9 @@ with tab_norm:
             width="stretch",
         )
 
-# ---------------------------------------------------------------------------
-# Tab 5: Faculty Moderation & Attendance Condonation Policy Simulator
-# ---------------------------------------------------------------------------
-with tab_sim:
+
+@st.fragment
+def _frag_policy_sim(df_in: pd.DataFrame) -> None:
     with st.container(border=True):
         card_header(
             "Faculty Moderation & Condonation What-If Policy Simulator",
@@ -390,24 +374,24 @@ with tab_sim:
             "subject_code", "semester", "cia1", "cia2", "cia3", "attendance",
             "end_sem", "updated_at", "subject_name", "subject_short", "credits", "faculty",
         ]
-        sim_raw = sliced_df[raw_cols].copy()
+        sim_raw = df_in[raw_cols].copy()
         sim_raw["cia3"] = np.clip(sim_raw["cia3"] + cia3_bonus, 0.0, 20.0)
         sim_raw["end_sem"] = np.clip(sim_raw["end_sem"] + ese_curve, 0.0, 100.0)
         sim_raw["attendance"] = np.clip(sim_raw["attendance"] + att_boost, 0.0, 100.0)
         sim_df = enrich_assessments(sim_raw)
 
         m1, m2, m3, m4 = st.columns(4)
-        base_mean, new_mean = float(sliced_df["total_score"].mean()), float(sim_df["total_score"].mean())
-        base_pass, new_pass = float(sliced_df["is_pass"].mean() * 100), float(sim_df["is_pass"].mean() * 100)
-        base_oa, new_oa = int(sliced_df["grade"].isin(["O", "A+"]).sum()), int(sim_df["grade"].isin(["O", "A+"]).sum())
-        base_att, new_att = float(sliced_df["att_eligible"].mean() * 100), float(sim_df["att_eligible"].mean() * 100)
+        base_mean, new_mean = float(df_in["total_score"].mean()), float(sim_df["total_score"].mean())
+        base_pass, new_pass = float(df_in["is_pass"].mean() * 100), float(sim_df["is_pass"].mean() * 100)
+        base_oa, new_oa = int(df_in["grade"].isin(["O", "A+"]).sum()), int(sim_df["grade"].isin(["O", "A+"]).sum())
+        base_att, new_att = float(df_in["att_eligible"].mean() * 100), float(sim_df["att_eligible"].mean() * 100)
 
         m1.metric("Simulated Mean Score", f"{new_mean:.1f} / 100", f"{new_mean - base_mean:+.1f} pts", border=True)
         m2.metric("Simulated Pass Rate", f"{new_pass:.1f}%", f"{new_pass - base_pass:+.1f}%", border=True)
         m3.metric("O & A+ Grade Count", f"{new_oa} records", f"{new_oa - base_oa:+d} records", border=True)
         m4.metric("85%+ Attendance Eligible", f"{new_att:.1f}%", f"{new_att - base_att:+.1f}%", border=True)
 
-        before_counts = sliced_df["grade"].value_counts().reindex(GRADE_ORDER, fill_value=0)
+        before_counts = df_in["grade"].value_counts().reindex(GRADE_ORDER, fill_value=0)
         after_counts = sim_df["grade"].value_counts().reindex(GRADE_ORDER, fill_value=0)
 
         fig_sim = go.Figure(
@@ -423,5 +407,28 @@ with tab_sim:
             margin=dict(l=8, r=12, t=30, b=8),
             height=300,
             legend=dict(orientation="h", y=1.14, x=0),
+            transition=dict(duration=360, easing="cubic-in-out"),
         )
         st.plotly_chart(fig_sim, width="stretch", config={"displayModeBar": False})
+
+
+tab_viz, tab_group, tab_pivot, tab_norm, tab_sim = st.tabs(
+    [
+        ":material/bar_chart: Interactive Graph Explorer",
+        ":material/functions: GroupBy & Aggregations",
+        ":material/grid_on: Pivot & Cross-Tab Builder",
+        ":material/analytics: Z-Scores & Outlier Detection",
+        ":material/tune: Faculty Policy Simulator",
+    ]
+)
+
+with tab_viz:
+    _frag_graph_explorer(sliced_df)
+with tab_group:
+    _frag_groupby(sliced_df)
+with tab_pivot:
+    _frag_pivot(sliced_df)
+with tab_norm:
+    _frag_outliers(sliced_df)
+with tab_sim:
+    _frag_policy_sim(sliced_df)
