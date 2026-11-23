@@ -1,18 +1,12 @@
-"""Pandas/NumPy academic analytics, data manipulation helpers, and scikit-learn predictor."""
+"""Pandas/NumPy academic analytics, sub-ms cached pipelines, and scikit-learn predictor."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.model_selection import KFold, cross_val_predict
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 import streamlit as st
 
 from utils.constants import (
@@ -28,6 +22,9 @@ from utils.constants import (
     TARGET_GRADES,
 )
 from utils.database import load_raw_assessments
+
+if TYPE_CHECKING:
+    from sklearn.pipeline import Pipeline
 
 
 @dataclass(frozen=True)
@@ -86,7 +83,6 @@ def assign_grade_and_gp(
     grades = np.full(len(total_score), "F", dtype=object)
     gps = np.zeros(len(total_score), dtype=float)
 
-    # Iterate ascending from P to O so higher thresholds overwrite cleanly
     for tier in reversed(GRADE_SCALE[:-1]):
         mask = passed & (total_score >= float(tier["min_score"]))
         grades[mask] = str(tier["grade"])
@@ -128,7 +124,6 @@ def enrich_assessments(raw_df: pd.DataFrame) -> pd.DataFrame:
     df["att_eligible"] = df["attendance"] >= MIN_ATTENDANCE_ELIGIBILITY
     df["cia_momentum"] = np.round(df["cia3_pct"] - df["cia1_pct"], 1)
 
-    # Subject-wise class benchmark, Z-score, and percentile standing
     subj_mean = df.groupby("subject_code")["total_score"].transform("mean")
     subj_std = df.groupby("subject_code")["total_score"].transform("std").replace(0, 1.0)
     df["class_avg_score"] = np.round(subj_mean, 1)
@@ -141,7 +136,6 @@ def enrich_assessments(raw_df: pd.DataFrame) -> pd.DataFrame:
         df.groupby("subject_code")["total_score"].rank(pct=True) * 100.0, 1
     )
 
-    # Academic standing / risk classification
     df["risk_status"] = np.select(
         [
             (~df["is_pass"]) | (df["attendance"] < 80.0) | (df["internal_50"] < 24.0),
@@ -170,17 +164,41 @@ def apply_global_filters(df: pd.DataFrame, filters: GlobalFilters) -> pd.DataFra
     if df.empty:
         return df
     mask = pd.Series(True, index=df.index)
-    if filters.sections:
+    if filters.sections and len(filters.sections) < len(SECTIONS):
         mask &= df["section"].isin(filters.sections)
-    if filters.subjects:
+    if filters.subjects and len(filters.subjects) < len(SUBJECT_CODES):
         mask &= df["subject_code"].isin(filters.subjects)
-    if filters.grades:
+    if filters.grades and len(filters.grades) < len(GRADE_SCALE):
         mask &= df["grade"].isin(filters.grades)
-    if filters.risk_levels:
+    if filters.risk_levels and len(filters.risk_levels) < len(RISK_LEVELS):
         mask &= df["risk_status"].isin(filters.risk_levels)
     if filters.att_only_shortage:
         mask &= ~df["att_eligible"]
     return df.loc[mask].copy()
+
+
+@st.cache_data(show_spinner=False, max_entries=32)
+def get_filtered_bundle_cached(
+    db_version: int,
+    filters: GlobalFilters,
+) -> tuple[pd.DataFrame, pd.DataFrame, bytes]:
+    """Return cached (filtered_df, filtered_leaderboard_df, csv_bytes) in <0.2ms on repeat filter states."""
+    full_df, full_lb = load_enriched_cached(db_version)
+    is_unfiltered = (
+        len(filters.sections) == len(SECTIONS)
+        and len(filters.subjects) == len(SUBJECT_CODES)
+        and len(filters.grades) == len(GRADE_SCALE)
+        and len(filters.risk_levels) == len(RISK_LEVELS)
+        and not filters.att_only_shortage
+    )
+    if is_unfiltered:
+        filtered = full_df
+        lb = full_lb
+    else:
+        filtered = apply_global_filters(full_df, filters)
+        lb = build_student_leaderboard(filtered)
+    csv_bytes = filtered.to_csv(index=False).encode("utf-8") if not filtered.empty else b""
+    return filtered, lb, csv_bytes
 
 
 def build_student_leaderboard(df: pd.DataFrame) -> pd.DataFrame:
@@ -218,7 +236,6 @@ def build_student_leaderboard(df: pd.DataFrame) -> pd.DataFrame:
     grouped["avg_total_100"] = np.round(grouped["avg_total_100"], 1)
     grouped["avg_attendance"] = np.round(grouped["avg_attendance"], 1)
 
-    # Sparkline array for Streamlit AreaChartColumn / LineChartColumn: [CIA1%, CIA2%, CIA3%, ESE%]
     grouped["trajectory"] = [
         [round(c1, 1), round(c2, 1), round(c3, 1), round(ese, 1)]
         for c1, c2, c3, ese in zip(
@@ -289,8 +306,7 @@ def build_pivot_matrix(
         return pd.DataFrame()
 
     if agg_name == "Count (Cross-Tab)":
-        ct = pd.crosstab(df[index_col], df[columns_col], margins=True, margins_name="All")
-        return ct
+        return pd.crosstab(df[index_col], df[columns_col], margins=True, margins_name="All")
 
     agg_map = {
         "Mean": "mean",
@@ -405,7 +421,6 @@ def recommend_sgpa_plan(student_df: pd.DataFrame, target_sgpa: float) -> pd.Data
         ["subject_code", "subject_name", "credits", "internal_50", "attendance", "class_avg_score"]
     ].copy()
 
-    # Start each subject at its highest feasible grade, then greedily relax or tighten toward target_sgpa
     achievable_tiers: list[list[tuple[str, float, float]]] = []
     for row in plan.itertuples(index=False):
         options: list[tuple[str, float, float]] = []
@@ -419,8 +434,6 @@ def recommend_sgpa_plan(student_df: pd.DataFrame, target_sgpa: float) -> pd.Data
             options = [("F", 0.0, 100.0)]
         achievable_tiers.append(options)
 
-    # Choose balanced minimum effort combination whose weighted GP >= target_sgpa (or max possible)
-    # Start from easiest passable option and upgrade the subject with lowest required ESE jump per credit
     chosen_idx = [len(opts) - 1 for opts in achievable_tiers]
     credits = plan["credits"].to_numpy(dtype=float)
     total_credits = float(np.sum(credits)) or 1.0
@@ -438,7 +451,6 @@ def recommend_sgpa_plan(student_df: pd.DataFrame, target_sgpa: float) -> pd.Data
                 next_ese = opts[cur - 1][2]
                 cur_ese = opts[cur][2]
                 gp_gain = (opts[cur - 1][1] - opts[cur][1]) * credits[i]
-                # Prefer lower absolute required ESE & higher credit leverage
                 cost = (next_ese * 0.7 + (next_ese - cur_ese) * 0.3) / max(gp_gain, 0.1)
                 if cost < best_cost:
                     best_cost = cost
@@ -487,6 +499,13 @@ FEATURE_LABELS = {
 
 def train_ml_ese_predictor(df: pd.DataFrame) -> PredictorBundle:
     """Train cross-validated scikit-learn Ridge & Random Forest models on live cohort data."""
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.linear_model import Ridge
+    from sklearn.metrics import mean_absolute_error, r2_score
+    from sklearn.model_selection import KFold, cross_val_predict
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
     X = df[FEATURE_COLS].to_numpy(dtype=float)
     y = df["end_sem"].to_numpy(dtype=float)
 

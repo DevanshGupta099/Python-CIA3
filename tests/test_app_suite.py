@@ -25,6 +25,7 @@ from utils.analytics import (
     calculate_target_ese_table,
     compute_normalized_and_outliers,
     enrich_assessments,
+    get_filtered_bundle_cached,
     predict_ese_score,
     recommend_sgpa_plan,
     train_ml_ese_predictor,
@@ -32,6 +33,19 @@ from utils.analytics import (
 from utils.charts import (
     cia_progression_area_chart,
     cohort_gpa_trend_chart,
+    echarts_cia_progression,
+    echarts_cohort_gpa_trend,
+    echarts_explorer_chart,
+    echarts_feature_importance,
+    echarts_grade_distribution,
+    echarts_pivot_heatmap,
+    echarts_policy_sim,
+    echarts_predictor_feasibility,
+    echarts_semester_gpa_trend,
+    echarts_statistical_coupling,
+    echarts_student_radar,
+    echarts_subject_breakdown,
+    echarts_subject_quartiles,
     grade_distribution_chart,
     ml_feature_importance_chart,
     predictor_feasibility_curve,
@@ -42,6 +56,7 @@ from utils.charts import (
     subject_box_with_student_chart,
     subject_cia_breakdown_chart,
 )
+from utils.ui import build_sparkline_svg
 from utils.constants import GRADE_ORDER, RISK_LEVELS, SUBJECT_CODES
 from utils.database import (
     CSV_SEED_PATH,
@@ -219,6 +234,29 @@ def test_analytics_advisor_and_charts() -> None:
     assert semester_gpa_trend_chart(8.1, 8.5, 8.9, 7.4, 7.6).data
     assert predictor_feasibility_curve(41.0, "A+", pred, lo, hi).data
     assert ml_feature_importance_chart(bundle.feature_importance).data
+
+    # 60fps Apache ECharts specs & zero-Vega inline SVG sparklines
+    assert "<svg" in build_sparkline_svg([72.0, 78.0, 81.0, 76.0], kind="area")
+    assert "<rect" in build_sparkline_svg([35.0, 38.0, 41.0, 39.0], kind="bar")
+    assert echarts_subject_breakdown(df, "Stacked CIA")["series"]
+    assert echarts_subject_breakdown(df, "Section A vs B")["series"]
+    assert echarts_cia_progression(df)["series"]
+    assert echarts_cohort_gpa_trend(lb)["series"]
+    assert echarts_grade_distribution(df, "Donut")["series"]
+    assert echarts_grade_distribution(df, "Sunburst")["series"]
+    assert echarts_statistical_coupling(df, "Correlation Matrix")["series"]
+    assert echarts_statistical_coupling(df, "Internal vs ESE")["series"]
+    assert echarts_student_radar(stu_df, df)["series"]
+    assert echarts_subject_quartiles(df, stu_df, "total_score", "Box Plot")["series"]
+    assert echarts_semester_gpa_trend(8.1, 8.5, 8.9, 7.4, 7.6)["series"]
+    assert echarts_predictor_feasibility(41.0, "A+", pred, lo, hi)["series"]
+    assert echarts_feature_importance(bundle.feature_importance)["series"]
+    assert echarts_explorer_chart(df, "Scatter + OLS Regression Line", "internal_50", "end_sem", "section", {})["series"]
+    assert echarts_pivot_heatmap(piv.iloc[:-1, :-1])["series"]
+    counts = df["grade"].value_counts()
+    assert echarts_policy_sim(counts, counts)["series"]
+    flt_df, flt_lb, flt_csv = get_filtered_bundle_cached(0, flt)
+    assert not flt_df.empty and not flt_lb.empty and len(flt_csv) > 100
 
     sb_fig1 = seaborn_statistical_figure(df, "Correlation Heatmap", is_dark=False)
     plt.close(sb_fig1)
