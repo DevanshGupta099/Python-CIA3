@@ -5,9 +5,39 @@
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
+import sys
 
 import streamlit as st
+
+# Ensure Streamlit Cloud hot-reloads updated `utils.*` submodules after a git push
+# without needing a manual container reboot.
+_APP_ROOT = Path(__file__).resolve().parent
+_SAVED_MTIMES: dict[str, float] = getattr(sys, "_cg_module_mtimes", {})
+_UTILS_ORDER = (
+    "utils.constants",
+    "utils.validators",
+    "utils.database",
+    "utils.analytics",
+    "utils.ui",
+    "utils.charts",
+    "utils.advisor",
+)
+_reload_needed = False
+for _mname in _UTILS_ORDER:
+    _mpath = _APP_ROOT / (_mname.replace(".", "/") + ".py")
+    if _mpath.exists():
+        _mt = _mpath.stat().st_mtime
+        if _SAVED_MTIMES.get(_mname) != _mt:
+            _SAVED_MTIMES[_mname] = _mt
+            _reload_needed = True
+
+if _reload_needed:
+    for _mname in _UTILS_ORDER:
+        if _mname in sys.modules:
+            importlib.reload(sys.modules[_mname])
+    setattr(sys, "_cg_module_mtimes", _SAVED_MTIMES)
 
 from utils.advisor import open_insights_drawer
 from utils.analytics import GlobalFilters, apply_global_filters, load_enriched_cached
