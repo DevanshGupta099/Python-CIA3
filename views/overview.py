@@ -1,4 +1,4 @@
-"""Executive Cohort Overview: 60fps ECharts Canvas, Zero-Vega SVG Sparklines & Instant Fragments."""
+"""Executive Cohort Overview: Verdigris & Obsidian Editorial Design, 60fps Canvas & Zero Overlap."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from utils.charts import (
     render_seaborn_png_cached,
 )
 from utils.constants import RISK_BADGES, RISK_LEVELS
-from utils.ui import card_header, render_hero_strip, section_header
+from utils.ui import card_header, render_page_header, section_header
 
 full_df: pd.DataFrame = st.session_state["full_df"]
 full_lb: pd.DataFrame = st.session_state["full_leaderboard"]
@@ -26,19 +26,10 @@ filtered_lb: pd.DataFrame = st.session_state["filtered_leaderboard"]
 filtered_csv: bytes = st.session_state.get("filtered_csv", b"")
 is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
-render_hero_strip(
-    eyebrow="CHRIST (Deemed to be University) · Department of Computer Science",
-    title="ChristGrade: Real-Time 2MCA Academic Performance & CIA Intelligence",
-    subtitle=(
-        "Monitor CIA 1, Mid-Sem (CIA 2), CIA 3 Assignment, 85% Attendance compliance, and End-Semester "
-        "trajectories across 2MCA-A & 2MCA-B with 60fps Canvas charts and instant fragment updates."
-    ),
-    chips=[
-        f"{len(filtered_lb)} Active Scholars",
-        f"{len(df)} CIA Records",
-        "22 Semester Credits",
-        "60fps Smooth Canvas",
-    ],
+render_page_header(
+    title="Academic Performance Overview",
+    subtitle="Cohort-wide CIA 1, Mid-Semester, CIA 3, attendance compliance, and End-Semester outcomes across 2MCA-A & 2MCA-B.",
+    meta_summary=f"{len(filtered_lb)} Students · {len(df)} Assessments · 22 Credits",
 )
 
 _toolbar_fn = st.session_state.get("_render_global_filter_toolbar")
@@ -53,11 +44,10 @@ if df.empty:
     st.stop()
 
 actions = section_header(
-    "Cohort Performance Snapshot",
-    help_text="Certified real-time aggregates computed from the active filter selection.",
+    "Cohort Snapshot",
+    help_text="Real-time aggregates computed from the active filter selection.",
     definition_key="final_grade",
 )
-actions.badge("Live SQLite", icon=":material/database:", color="green")
 actions.download_button(
     "Export CSV",
     data=filtered_csv,
@@ -67,7 +57,7 @@ actions.download_button(
 )
 
 # ---------------------------------------------------------------------------
-# Row 1: 4 Elevated Bento KPI Cards (Zero-CLS Synchronous Render)
+# Row 1: 4 Elevated Bento KPI Cards
 # ---------------------------------------------------------------------------
 mean_score = float(df["total_score"].mean())
 overall_mean = float(full_df["total_score"].mean())
@@ -79,14 +69,14 @@ shortage_cnt = int((~df["att_eligible"]).sum())
 
 k1, k2, k3, k4 = st.columns(4)
 k1.metric(
-    "Mean Composite Score :blue[:material/verified:]",
+    "Mean Composite Score",
     f"{mean_score:.1f} / 100",
     f"{mean_score - overall_mean:+.1f} pts vs cohort",
     icon=":material/leaderboard:",
     border=True,
 )
 k2.metric(
-    "Mean CIA Internal :blue[:material/verified:]",
+    "Mean CIA Internal",
     f"{mean_internal:.2f} / 50",
     f"{(mean_internal / 50.0) * 100:.1f}% internal avg",
     icon=":material/assignment_turned_in:",
@@ -100,7 +90,7 @@ k3.metric(
     border=True,
 )
 k4.metric(
-    "85%+ Attendance Eligibility",
+    "85%+ Attendance Compliance",
     f"{att_compliance:.1f}%",
     f"{shortage_cnt} shortage flags",
     delta_color="normal" if shortage_cnt == 0 else "inverse",
@@ -110,17 +100,16 @@ k4.metric(
 
 
 # ---------------------------------------------------------------------------
-# Row 2: Fragment-Isolated Subject Breakdown & Milestone Progression (60fps Morph)
+# Row 2: Fragment-Isolated Subject Breakdown & Milestone Progression
 # ---------------------------------------------------------------------------
 @st.fragment
 def _render_breakdown_section(active_df: pd.DataFrame, active_lb: pd.DataFrame, dark_mode: bool) -> None:
     col_left, col_right = st.columns([3, 2])
 
-    with col_left.container(border=True, height=445):
+    with col_left.container(border=True, height=460):
         ctrl = card_header(
             "Subject-Wise Assessment Architecture",
-            "Contribution of CIA 1, Mid-Sem CIA 2, CIA 3, Attendance & End-Sem",
-            verified=True,
+            "Weighted marks (/100) across CIA 1, Mid-Sem, CIA 3, Attendance & End-Sem",
         )
         breakdown_view = ctrl.segmented_control(
             "Breakdown Mode",
@@ -132,16 +121,15 @@ def _render_breakdown_section(active_df: pd.DataFrame, active_lb: pd.DataFrame, 
         )
         render_echarts(
             echarts_subject_breakdown(active_df, view_mode=breakdown_view, is_dark=dark_mode),
-            height=330,
+            height=345,
             key="ov_breakdown_chart",
             alt=f"Subject-wise assessment breakdown in {breakdown_view} mode",
         )
 
-    with col_right.container(border=True, height=445):
+    with col_right.container(border=True, height=460):
         r_ctrl = card_header(
-            "Semester Trajectory & GPA Trend",
-            "Switch between CIA milestone momentum and Sem 1 → Sem 2 GPA trend",
-            verified=True,
+            "Semester Trajectory",
+            "Milestone % vs. Sem 1 → 2 GPA",
         )
         traj_mode = r_ctrl.segmented_control(
             "Trajectory View",
@@ -158,7 +146,7 @@ def _render_breakdown_section(active_df: pd.DataFrame, active_lb: pd.DataFrame, 
         )
         render_echarts(
             traj_spec,
-            height=330,
+            height=345,
             key="ov_traj_chart",
             alt=f"Cohort trajectory showing {traj_mode}",
         )
@@ -170,8 +158,8 @@ _render_breakdown_section(df, filtered_lb, is_dark)
 # Row 3: Fragment-Isolated Grade Mix & Scholar Leaderboard
 # ---------------------------------------------------------------------------
 section_header(
-    "Grade Distribution & Interactive Scholar Leaderboard",
-    help_text="Select any student row in the table to open their profile modal & printable marksheet.",
+    "Grade Distribution & Scholar Leaderboard",
+    help_text="Select any student row in the table to open their profile modal and printable marksheet.",
     definition_key="cia_internal",
 )
 
@@ -188,9 +176,8 @@ def _render_leaderboard_section(
 
     with g_col.container(border=True, height="stretch"):
         g_ctrl = card_header(
-            "CHRIST Grade Mix",
-            "Distribution across O, A+, A, B+, B, C, P, and F tiers",
-            verified=True,
+            "CHRIST 10-Point Grade Mix",
+            "Assessment distribution across O, A+, A, B+, B, C, P, and F tiers",
         )
         chart_style = g_ctrl.segmented_control(
             "Grade Chart Style",
@@ -202,15 +189,15 @@ def _render_leaderboard_section(
         )
         render_echarts(
             echarts_grade_distribution(active_df, mode=chart_style, is_dark=dark_mode),
-            height=355,
+            height=360,
             key="ov_grade_chart",
             alt=f"CHRIST University letter grade distribution {chart_style} chart",
         )
 
     with t_col.container(border=True, height="stretch"):
         l_ctrl = card_header(
-            "Scholar SGPA Leaderboard (Select Row to Inspect)",
-            "Click any row checkbox to launch Student Radar, Deep-Links & HTML Marksheet",
+            "Scholar SGPA Leaderboard",
+            "Select any row to inspect individual Radar standing and export an HTML marksheet",
         )
         top_n = l_ctrl.segmented_control(
             "Rows",
@@ -267,7 +254,7 @@ def _render_leaderboard_section(
                 ),
             },
             hide_index=True,
-            height=355,
+            height=360,
             width="stretch",
             on_select="rerun",
             selection_mode="single-row",
@@ -295,7 +282,7 @@ _render_leaderboard_section(df, filtered_lb, full_df, full_lb, is_dark)
 
 
 # ---------------------------------------------------------------------------
-# Row 4: Fragment-Isolated Statistical Coupling (Interactive + Seaborn) & Audit
+# Row 4: Fragment-Isolated Statistical Coupling & Subject Benchmark Audit
 # ---------------------------------------------------------------------------
 @st.fragment
 def _render_statistical_section(active_df: pd.DataFrame, dark_mode: bool) -> None:
@@ -304,8 +291,7 @@ def _render_statistical_section(active_df: pd.DataFrame, dark_mode: bool) -> Non
     with s_col1.container(border=True, height="stretch"):
         sb_ctrl = card_header(
             "Statistical Assessment Coupling",
-            "Interactive Pearson correlation matrix, bivariate OLS scatter & Seaborn KDE",
-            verified=True,
+            "Pearson correlation matrix, bivariate OLS scatter & Seaborn kernel density",
         )
         sb_mode = sb_ctrl.segmented_control(
             "Statistical View",
@@ -334,7 +320,7 @@ def _render_statistical_section(active_df: pd.DataFrame, dark_mode: bool) -> Non
         else:
             render_echarts(
                 echarts_statistical_coupling(active_df, mode=sb_mode, is_dark=dark_mode),
-                height=345,
+                height=350,
                 key="ov_coupling_chart",
                 alt=f"Statistical assessment coupling {sb_mode}",
             )
@@ -371,7 +357,7 @@ def _render_statistical_section(active_df: pd.DataFrame, dark_mode: bool) -> Non
                 "att_ok_pct": st.column_config.NumberColumn("Att >=85%", format="%.0f%%"),
             },
             hide_index=True,
-            height=345,
+            height=350,
             width="stretch",
         )
 

@@ -51,7 +51,7 @@ from utils.constants import (
     SUBJECT_LABELS,
 )
 from utils.database import get_db_version, init_database
-from utils.ui import inject_custom_css, render_footer
+from utils.ui import inject_custom_css, render_brand_lockup, render_footer
 
 STATIC_DIR = _APP_ROOT / "static"
 icon_file = STATIC_DIR / "icon.svg"
@@ -68,38 +68,36 @@ if not st.session_state.get("_db_initialized"):
 
 is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
-page = st.navigation(
-    [
-        st.Page(
-            "views/overview.py",
-            title="Overview",
-            icon=":material/insights:",
-            default=True,
-        ),
-        st.Page(
-            "views/student_analytics.py",
-            title="Student Radar",
-            icon=":material/person_search:",
-        ),
-        st.Page(
-            "views/predictor.py",
-            title="Score Predictor",
-            icon=":material/ads_click:",
-        ),
-        st.Page(
-            "views/data_lab.py",
-            title="Data Studio",
-            icon=":material/science:",
-        ),
-        st.Page(
-            "views/crud_manager.py",
-            title="Marks & CRUD",
-            icon=":material/edit_note:",
-        ),
-    ],
-    position="top",
-)
+PAGES = [
+    st.Page(
+        "views/overview.py",
+        title="Overview",
+        icon=":material/space_dashboard:",
+        default=True,
+    ),
+    st.Page(
+        "views/student_analytics.py",
+        title="Student Radar",
+        icon=":material/person_search:",
+    ),
+    st.Page(
+        "views/predictor.py",
+        title="Score Predictor",
+        icon=":material/track_changes:",
+    ),
+    st.Page(
+        "views/data_lab.py",
+        title="Data Studio",
+        icon=":material/tune:",
+    ),
+    st.Page(
+        "views/crud_manager.py",
+        title="Marks & CRUD",
+        icon=":material/edit_note:",
+    ),
+]
 
+page = st.navigation(PAGES, position="hidden")
 inject_custom_css(is_dark=is_dark, page_title=page.title)
 
 pending_jump = st.session_state.pop("_pending_page_jump", None)
@@ -185,8 +183,8 @@ full_df, full_leaderboard = load_enriched_cached(db_ver)
 st.session_state["full_df"] = full_df
 st.session_state["full_leaderboard"] = full_leaderboard
 
-# Pre-compute filter state synchronously BEFORE rendering header so zero st.empty() shift occurs
 is_filterable_page = page.title in {"Overview", "Data Studio"}
+has_custom_filters = False
 if is_filterable_page:
     if "cohort_seg" not in st.session_state:
         st.session_state["cohort_seg"] = st.session_state["_saved_cohort"]
@@ -204,6 +202,9 @@ if is_filterable_page:
     cur_grades = list(st.session_state["flt_grades"])
     cur_risks = list(st.session_state["flt_risk"])
     cur_att_short = bool(st.session_state["flt_att_short"])
+    has_custom_filters = bool(
+        cur_cohort != "All" or cur_subs or cur_grades or cur_risks or cur_att_short
+    )
 
     active_sections = SECTIONS if cur_cohort == "All" else (cur_cohort,)
     filters = GlobalFilters(
@@ -218,40 +219,45 @@ if is_filterable_page:
     st.session_state["filtered_df"] = filtered_df
     st.session_state["filtered_leaderboard"] = filtered_lb
     st.session_state["filtered_csv"] = filtered_csv
-    header_caption = filters.describe(
-        total_rows=len(filtered_df),
-        total_students=len(filtered_lb),
-    )
 else:
     st.session_state["filtered_df"] = full_df
     st.session_state["filtered_leaderboard"] = full_leaderboard
-    header_caption = (
-        f"Live SQLite database synced · **{len(full_leaderboard)}** MCA students · "
-        f"**{len(full_df)}** subject CIA assessments"
-    )
 
-# Shared top header + Academic Insights drawer trigger (rendered synchronously with zero CLS)
-with st.container(horizontal=True, vertical_alignment="center"):
-    with st.container(gap=None):
-        st.title(page.title, icon=page.icon, anchor=False)
-        st.caption(header_caption)
-    st.badge("CHRIST 2MCA · Sem 2", icon=":material/school:", color="blue")
-    st.button(
-        "Reset",
-        icon=":material/restart_alt:",
-        type="tertiary",
-        on_click=reset_global_filters,
-        help="Reset cohort, subject, grade, and URL filters",
-    )
-    ask_clicked = st.button(
-        "Academic Insights",
-        icon=":material/auto_awesome:",
-        type="primary",
-        help="Open live data-grounded Academic Insights assistant",
-    )
+# ---------------------------------------------------------------------------
+# Custom Floating Glass Command Navbar (Brand · Pill Nav Dock · Actions)
+# ---------------------------------------------------------------------------
+with st.container(horizontal=True, vertical_alignment="center", gap="medium", key="cg_top_navbar"):
+    with st.container(width="content"):
+        render_brand_lockup()
+
+    with st.container(horizontal=True, horizontal_alignment="center", vertical_alignment="center"):
+        with st.container(horizontal=True, vertical_alignment="center", width="content", key="cg_nav_dock"):
+            for nav_page in PAGES:
+                if nav_page.title == page.title:
+                    with st.container(width="content", key="cg_nav_active_item"):
+                        st.page_link(nav_page, label=nav_page.title, icon=nav_page.icon, width="content")
+                else:
+                    st.page_link(nav_page, label=nav_page.title, icon=nav_page.icon, width="content")
+
+    with st.container(horizontal=True, horizontal_alignment="right", vertical_alignment="center", gap="small", width="content"):
+        if has_custom_filters:
+            st.button(
+                "Reset",
+                icon=":material/restart_alt:",
+                type="tertiary",
+                on_click=reset_global_filters,
+                help="Clear active cohort, subject, and grade filters",
+            )
+        ask_clicked = st.button(
+            "Insights",
+            icon=":material/auto_awesome:",
+            type="primary",
+            help="Open live Academic Insights assistant",
+        )
+
 
 def render_global_filter_toolbar() -> None:
-    """Render shared Cohort/Subject/Grade/Attendance filter toolbar below page Hero."""
+    """Render shared Cohort/Subject/Grade/Attendance filter toolbar below the page header."""
     if not is_filterable_page:
         return
     with st.container(horizontal=True, vertical_alignment="center", gap="medium"):
@@ -263,7 +269,7 @@ def render_global_filter_toolbar() -> None:
             on_change=_sync_saved_filters,
             label_visibility="collapsed",
         )
-        with st.popover("Filter Subjects & Grades", icon=":material/tune:"):
+        with st.popover("Subjects & Grades", icon=":material/tune:"):
             st.pills(
                 "MCA Subjects",
                 list(SUBJECT_CODES),

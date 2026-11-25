@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="238" height="44" viewBox="0 0 238 44" fill="none">
   <defs>
-    <linearGradient id="solarisLight" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1D4ED8"/>
-      <stop offset="48%" stop-color="#E11D48"/>
-      <stop offset="100%" stop-color="#F97316"/>
+    <linearGradient id="verdigrisLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F766E"/>
+      <stop offset="55%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0284C7"/>
     </linearGradient>
   </defs>
-  <rect x="2" y="4" width="36" height="36" rx="11" fill="url(#solarisLight)"/>
-  <path d="M10.5 26.5L16.5 20L21 23.5L29 14.5" stroke="#FFFFFF" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="29" cy="14.5" r="2.6" fill="#FDE68A"/>
-  <text x="48" y="21.5" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-size="17" font-weight="800" fill="#0F172A" letter-spacing="-0.4">ChristGrade</text>
-  <text x="48" y="34.5" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-size="10" font-weight="700" fill="#E11D48" letter-spacing="0.7">CHRIST 2MCA · ACADEMIC BI</text>
+  <rect x="2" y="4" width="36" height="36" rx="10" fill="url(#verdigrisLight)"/>
+  <path d="M11 26.5L17 20L21.5 23.2L29 14.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="29" cy="14.5" r="2.5" fill="#FDE68A"/>
+  <text x="48" y="21.5" font-family="system-ui, -apple-system, sans-serif" font-size="17" font-weight="750" fill="#111827" letter-spacing="-0.4">ChristGrade</text>
+  <text x="48" y="34.5" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="650" fill="#0F766E" letter-spacing="0.6">CHRIST 2MCA · ACADEMIC BI</text>
 </svg>

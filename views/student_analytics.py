@@ -1,4 +1,4 @@
-"""Student Deep-Dive: Full-View Fragment Isolation, 60fps Morphing Radar & Printable Marksheet."""
+"""Student Deep-Dive: Editorial Layout, Morphing 6-Axis Radar, Quartile Standing & Printable Marksheet."""
 
 from __future__ import annotations
 
@@ -14,31 +14,21 @@ from utils.charts import (
     render_echarts,
 )
 from utils.constants import GRADE_BADGES, GRADE_ORDER, RISK_BADGES, SECTIONS
-from utils.ui import card_header, render_hero_strip
+from utils.ui import card_header, render_page_header
 
 full_df: pd.DataFrame = st.session_state["full_df"]
 leaderboard: pd.DataFrame = st.session_state["full_leaderboard"]
 is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
-# Handle incoming deep-link from Overview's Student Modal
 jumped_reg = st.session_state.pop("_jump_stu_reg", None)
 if jumped_reg:
     st.session_state["stu_sec_pick"] = "All"
     st.session_state["stu_selected_reg"] = jumped_reg
 
-render_hero_strip(
-    eyebrow="Individual Academic Diagnostics & Live What-If Sandbox",
-    title="Student Standing vs. Class Average · Radar, Box Plots & Printable Marksheet",
-    subtitle=(
-        "Inspect any 2MCA scholar's 6-subject polygon against cohort benchmarks, toggle Live What-If "
-        "marks in session memory, jump straight to Target Score Predictor, or export an HTML Progress Card."
-    ),
-    chips=[
-        "60fps Morphing Radar",
-        "Instant Student Switching",
-        "Live Session-State Sandbox",
-        "Printable HTML Marksheet",
-    ],
+render_page_header(
+    title="Student Standing & Subject Radar",
+    subtitle="Compare individual 6-subject performance against class averages, test What-If CIA adjustments, or export an official marksheet.",
+    meta_summary=f"{len(leaderboard)} Active Scholars · 6 Core Subjects",
 )
 
 
@@ -74,10 +64,10 @@ def _render_student_workspace(
             key="stu_selected_reg",
         )
         sandbox_mode = c_sandbox.toggle(
-            "Live What-If Marks",
+            "What-If Sandbox",
             value=False,
             key="stu_whatif_toggle",
-            help="Temporarily tweak this student's CIA scores in st.session_state without overwriting SQLite.",
+            help="Temporarily adjust this student's CIA scores in session memory without modifying SQLite.",
         )
 
     student_rows = all_df[all_df["reg_no"] == selected_reg].copy()
@@ -86,8 +76,8 @@ def _render_student_workspace(
     if sandbox_mode:
         with st.container(border=True):
             card_header(
-                "Real-Time Session Sandbox (What-If CIA Simulator)",
-                "Adjust CIA 1, Mid-Sem CIA 2, CIA 3, Attendance, or End-Sem below — charts morph instantaneously!",
+                "Session What-If CIA Simulator",
+                "Modify CIA 1, Mid-Sem, CIA 3, Attendance, or End-Sem below — radar and GPA update live",
             )
             editable_cols = ["subject_code", "subject_short", "cia1", "cia2", "cia3", "attendance", "end_sem"]
             sandbox_edit = st.data_editor(
@@ -123,28 +113,23 @@ def _render_student_workspace(
 
     with st.container(horizontal=True, vertical_alignment="center"):
         with st.container(horizontal=True, vertical_alignment="center", gap="small"):
-            st.subheader(f"{stu_meta['name']} ({selected_reg})", anchor=False)
-            st.badge(str(stu_meta["section"]), icon=":material/groups:", color="blue")
+            st.header(f"{stu_meta['name']} ({selected_reg})", anchor=False)
+            st.badge(str(stu_meta["section"]), color="gray")
             st.badge(
                 str(stu_meta["standing"]),
-                icon=":material/verified_user:",
-                color=RISK_BADGES.get(str(stu_meta["standing"]), "blue"),
+                color=RISK_BADGES.get(str(stu_meta["standing"]), "green"),
             )
-            st.badge(
-                f"Cohort Rank #{int(stu_meta['rank'])} of {len(all_lb)}",
-                icon=":material/emoji_events:",
-                color="orange",
-            )
+            st.badge(f"Rank #{int(stu_meta['rank'])} of {len(all_lb)}", color="blue")
             if sandbox_mode:
-                st.badge("Sandbox Mode Active", icon=":material/science:", color="red")
+                st.badge("Sandbox Active", color="orange")
 
         with st.container(horizontal=True, horizontal_alignment="right", width="content"):
-            if st.button("Predict End-Sem Targets", icon=":material/ads_click:"):
+            if st.button("Target Score Predictor", icon=":material/track_changes:"):
                 st.session_state["_jump_pred_reg"] = selected_reg
                 st.session_state["_pending_page_jump"] = "views/predictor.py"
                 st.rerun()
             st.download_button(
-                "Download HTML Marksheet",
+                "Export HTML Marksheet",
                 data=generate_student_html_report(student_rows, stu_meta),
                 file_name=f"ChristGrade_Marksheet_{selected_reg}.html",
                 mime="text/html",
@@ -195,34 +180,32 @@ def _render_student_workspace(
         for r in weak_subjects.itertuples(index=False):
             reasons = []
             if r.score_vs_avg < -3.0:
-                reasons.append(f"{r.score_vs_avg:+.1f} pts below class avg")
+                reasons.append(f"{r.score_vs_avg:+.1f} pts vs avg")
             if r.internal_50 < 30.0:
                 reasons.append(f"Internal {r.internal_50:.1f}/50")
             if not r.att_eligible:
-                reasons.append(f"Attendance {r.attendance:.1f}% (<85%)")
+                reasons.append(f"Att {r.attendance:.1f}% (<85%)")
             items.append(f"**{r.subject_code} ({r.subject_short})**: {', '.join(reasons)}")
         st.warning(
-            "**Priority Focus Subjects Identified:** " + "  ·  ".join(items),
+            "**Priority Focus Subjects:** " + "  ·  ".join(items),
             icon=":material/troubleshoot:",
         )
     else:
         st.success(
-            f"**All 6 subjects are on or above cohort benchmark!** Strongest lead in "
-            f"{', '.join(strong_subjects['subject_short'].tolist()) or 'consistent performance across subjects'}.",
+            f"**All 6 subjects meet or exceed cohort benchmarks.** Strongest lead in "
+            f"{', '.join(strong_subjects['subject_short'].tolist()) or 'consistent standing across subjects'}.",
             icon=":material/check_circle:",
         )
 
-    # Row 1: Morphing Radar + Cohort Quartiles
     r_col, b_col = st.columns([2, 3])
     with r_col.container(border=True, height="stretch"):
         card_header(
             "Multi-Subject Radar Profile",
-            "Selected student polygon vs. Class Average & Subject Topper",
-            verified=True,
+            "Selected student polygon vs. Class Average & Subject Topper (/100)",
         )
         render_echarts(
             echarts_student_radar(student_rows, all_df, is_dark=dark_mode),
-            height=330,
+            height=345,
             key="stu_radar_chart",
             alt=f"6-subject radar chart for {stu_meta['name']}",
         )
@@ -230,8 +213,7 @@ def _render_student_workspace(
     with b_col.container(border=True, height="stretch"):
         b_ctrl = card_header(
             "Standing Across Cohort Quartiles",
-            "Coral diamonds pinpoint the student inside each subject's distribution",
-            verified=True,
+            "Amber diamonds locate the student within each subject's class distribution",
         )
         dist_metric = b_ctrl.segmented_control(
             "Metric",
@@ -257,17 +239,16 @@ def _render_student_workspace(
                 kind=dist_kind,
                 is_dark=dark_mode,
             ),
-            height=330,
+            height=345,
             key="stu_quartile_chart",
             alt=f"Student standing across cohort quartiles for {dist_metric}",
         )
 
-    # Row 2: Semester GPA Trajectory + Subject Transcript
     t_col1, t_col2 = st.columns([2, 3])
     with t_col1.container(border=True, height="stretch"):
         t_ctrl = card_header(
             "Semester SGPA & CGPA Trajectory",
-            "Historical Sem 1 -> Current Sem 2 -> Target Sem 3 projection",
+            "Historical Sem 1 → Current Sem 2 → Target Sem 3 (/10)",
         )
         target_sem3 = t_ctrl.slider(
             "Sem 3 Goal",
@@ -287,7 +268,7 @@ def _render_student_workspace(
                 cohort_sem2_mean=float(all_lb["sem2_sgpa"].mean()),
                 is_dark=dark_mode,
             ),
-            height=315,
+            height=325,
             key="stu_gpa_trend_chart",
             alt=f"Semester GPA trajectory for {stu_meta['name']}",
         )
@@ -295,7 +276,7 @@ def _render_student_workspace(
     with t_col2.container(border=True, height="stretch"):
         card_header(
             "Subject-by-Subject CIA Transcript",
-            "Detailed breakdown with class delta, Z-score, and percentile standing",
+            "Complete component breakdown with class delta and percentile rank",
         )
         transcript = student_rows.copy()
         transcript["grade_badge"] = transcript["grade"].map(lambda g: [g])
@@ -339,7 +320,7 @@ def _render_student_workspace(
                 ),
             },
             hide_index=True,
-            height=315,
+            height=325,
             width="stretch",
         )
 
