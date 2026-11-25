@@ -1,4 +1,4 @@
-"""Verdigris & Obsidian Design System: Floating Glass Navbar, Recessed Pill Controls & Zero-Overlap Typography."""
+"""Solaris Editorial Design System: Floating Glass Navbar, Recessed Pill Controls & Zero-Overlap Typography."""
 
 from __future__ import annotations
 
@@ -19,68 +19,68 @@ _META_DESCRIPTION = (
 
 
 def _build_editorial_css(is_dark: bool = False) -> str:
-    """Build architectural Verdigris & Obsidian CSS with floating glass navbar and spring transitions."""
+    """Build architectural Solaris Editorial CSS with floating glass navbar and spring transitions."""
     bg_ambient = (
-        "radial-gradient(ellipse 75% 260px at 50% -70px, rgba(20, 184, 166, 0.11), transparent 70%), "
-        "radial-gradient(ellipse 45% 200px at 88% 0px, rgba(56, 189, 248, 0.06), transparent 65%)"
+        "radial-gradient(ellipse 75% 260px at 50% -70px, rgba(59, 130, 246, 0.12), transparent 70%), "
+        "radial-gradient(ellipse 45% 200px at 88% 0px, rgba(244, 63, 94, 0.07), transparent 65%)"
         if is_dark
-        else "radial-gradient(ellipse 75% 240px at 50% -80px, rgba(13, 148, 136, 0.07), transparent 70%), "
-        "radial-gradient(ellipse 45% 180px at 88% 0px, rgba(2, 132, 199, 0.045), transparent 65%)"
+        else "radial-gradient(ellipse 75% 240px at 50% -80px, rgba(29, 78, 216, 0.075), transparent 70%), "
+        "radial-gradient(ellipse 45% 180px at 88% 0px, rgba(225, 29, 72, 0.045), transparent 65%)"
     )
-    nav_bg = "rgba(18, 23, 29, 0.82)" if is_dark else "rgba(255, 255, 255, 0.86)"
-    nav_border = "rgba(255, 255, 255, 0.08)" if is_dark else "rgba(15, 23, 42, 0.08)"
+    nav_bg = "rgba(18, 23, 38, 0.82)" if is_dark else "rgba(255, 255, 255, 0.86)"
+    nav_border = "rgba(148, 163, 184, 0.18)" if is_dark else "rgba(15, 23, 42, 0.085)"
     nav_shadow = (
         "0 8px 30px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
         if is_dark
         else "0 4px 20px -6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.03)"
     )
-    dock_bg = "rgba(8, 10, 13, 0.65)" if is_dark else "#EFF2F1"
-    dock_border = "rgba(255, 255, 255, 0.06)" if is_dark else "rgba(15, 23, 42, 0.06)"
+    dock_bg = "rgba(10, 13, 22, 0.65)" if is_dark else "#EFF2F8"
+    dock_border = "rgba(148, 163, 184, 0.14)" if is_dark else "rgba(15, 23, 42, 0.06)"
     nav_active_bg = (
-        "linear-gradient(180deg, rgba(20, 184, 166, 0.20) 0%, rgba(13, 148, 136, 0.11) 100%)"
+        "linear-gradient(180deg, rgba(59, 130, 246, 0.22) 0%, rgba(37, 99, 235, 0.12) 100%)"
         if is_dark
         else "#FFFFFF"
     )
-    nav_active_border = "rgba(45, 212, 191, 0.36)" if is_dark else "rgba(15, 118, 110, 0.22)"
-    nav_active_text = "#5EEAD4" if is_dark else "#0F766E"
+    nav_active_border = "rgba(96, 165, 250, 0.45)" if is_dark else "rgba(29, 78, 216, 0.28)"
+    nav_active_text = "#93C5FD" if is_dark else "#1D4ED8"
     nav_active_shadow = (
-        "0 2px 10px -2px rgba(20, 184, 166, 0.22)"
+        "0 2px 10px -2px rgba(37, 99, 235, 0.25)"
         if is_dark
         else "0 1px 3px rgba(15, 23, 42, 0.08)"
     )
-    nav_idle_text = "#9CA3AF" if is_dark else "#4B5563"
-    nav_hover_bg = "rgba(255, 255, 255, 0.045)" if is_dark else "rgba(15, 23, 42, 0.04)"
-    nav_hover_text = "#F3F4F6" if is_dark else "#111827"
+    nav_idle_text = "#94A3B8" if is_dark else "#475569"
+    nav_hover_bg = "rgba(148, 163, 184, 0.08)" if is_dark else "rgba(15, 23, 42, 0.04)"
+    nav_hover_text = "#F1F5F9" if is_dark else "#0F172A"
 
     card_bg = (
-        "linear-gradient(180deg, #141A21 0%, #11161C 100%)"
+        "linear-gradient(180deg, #141A2C 0%, #121726 100%)"
         if is_dark
         else "#FFFFFF"
     )
-    card_border = "rgba(255, 255, 255, 0.075)" if is_dark else "rgba(17, 24, 39, 0.08)"
+    card_border = "rgba(148, 163, 184, 0.18)" if is_dark else "rgba(15, 23, 42, 0.085)"
     card_shadow = (
         "0 6px 24px -8px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.045)"
         if is_dark
         else "0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 28px -10px rgba(15, 23, 42, 0.055)"
     )
-    hover_border = "rgba(45, 212, 191, 0.32)" if is_dark else "rgba(13, 148, 136, 0.28)"
+    hover_border = "rgba(96, 165, 250, 0.45)" if is_dark else "rgba(29, 78, 216, 0.34)"
     hover_shadow = (
-        "0 12px 32px -8px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(45, 212, 191, 0.12)"
+        "0 12px 32px -8px rgba(37, 99, 235, 0.24), 0 0 0 1px rgba(96, 165, 250, 0.14)"
         if is_dark
-        else "0 14px 32px -10px rgba(13, 148, 136, 0.11)"
+        else "0 14px 32px -10px rgba(29, 78, 216, 0.13)"
     )
 
-    seg_track_bg = "#0A0D10" if is_dark else "#EEF1F0"
-    seg_track_border = "rgba(255, 255, 255, 0.07)" if is_dark else "rgba(15, 23, 42, 0.07)"
-    seg_active_bg = "#18212A" if is_dark else "#FFFFFF"
-    seg_active_fg = "#5EEAD4" if is_dark else "#0F766E"
-    seg_active_border = "rgba(45, 212, 191, 0.35)" if is_dark else "rgba(15, 118, 110, 0.22)"
-    seg_idle_fg = "#9CA3AF" if is_dark else "#4B5563"
+    seg_track_bg = "#0A0D16" if is_dark else "#EFF2F8"
+    seg_track_border = "rgba(148, 163, 184, 0.14)" if is_dark else "rgba(15, 23, 42, 0.07)"
+    seg_active_bg = "#1A2134" if is_dark else "#FFFFFF"
+    seg_active_fg = "#93C5FD" if is_dark else "#1D4ED8"
+    seg_active_border = "rgba(96, 165, 250, 0.55)" if is_dark else "rgba(29, 78, 216, 0.35)"
+    seg_idle_fg = "#94A3B8" if is_dark else "#475569"
 
-    title_color = "#F9FAFB" if is_dark else "#111827"
-    muted_text = "#9CA3AF" if is_dark else "#4B5563"
-    subtle_line = "rgba(255, 255, 255, 0.07)" if is_dark else "rgba(15, 23, 42, 0.075)"
-    stat_pill_bg = "rgba(255, 255, 255, 0.04)" if is_dark else "rgba(15, 23, 42, 0.035)"
+    title_color = "#F8FAFC" if is_dark else "#0F172A"
+    muted_text = "#CBD5E1" if is_dark else "#475569"
+    subtle_line = "rgba(148, 163, 184, 0.16)" if is_dark else "rgba(15, 23, 42, 0.08)"
+    stat_pill_bg = "rgba(255, 255, 255, 0.06)" if is_dark else "rgba(15, 23, 42, 0.04)"
 
     return f"""
     <style>
@@ -145,7 +145,7 @@ def _build_editorial_css(is_dark: bool = False) -> str:
         left: 0;
         right: 0;
         height: 2.5px;
-        background: linear-gradient(90deg, #0F766E 0%, #14B8A6 38%, #38BDF8 72%, #F59E0B 100%);
+        background: linear-gradient(90deg, #1D4ED8 0%, #2563EB 28%, #E11D48 56%, #F97316 80%, #F59E0B 100%);
         z-index: 999999;
         pointer-events: none;
     }}
@@ -177,11 +177,11 @@ def _build_editorial_css(is_dark: bool = False) -> str:
         width: 30px;
         height: 30px;
         border-radius: 9px;
-        background: linear-gradient(135deg, #0F766E 0%, #14B8A6 55%, #0284C7 100%);
+        background: linear-gradient(135deg, #1D4ED8 0%, #E11D48 50%, #F97316 100%);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 3px 10px -2px rgba(20, 184, 166, 0.45);
+        box-shadow: 0 3px 10px -2px rgba(29, 78, 216, 0.42);
         flex-shrink: 0;
     }}
     .cg-brand-name {{
@@ -356,15 +356,15 @@ def _build_editorial_css(is_dark: bool = False) -> str:
     }}
 
     /* =====================================================================
-       PRIMARY ACTION BUTTONS (WCAG AA >= 5.4:1 Verdigris Teal Gradient)
+       PRIMARY ACTION BUTTONS (WCAG AA >= 6.7:1 Solaris Royal Cobalt)
        ===================================================================== */
     button[data-testid="stBaseButton-primary"],
     .stDownloadButton > button[kind="primary"] {{
-        background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
-        border: 1px solid rgba(45, 212, 191, 0.28) !important;
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%) !important;
+        border: 1px solid rgba(96, 165, 250, 0.28) !important;
         color: #FFFFFF !important;
         font-weight: 600 !important;
-        box-shadow: 0 2px 10px -2px rgba(13, 148, 136, 0.38) !important;
+        box-shadow: 0 2px 10px -2px rgba(29, 78, 216, 0.38) !important;
     }}
     button[data-testid="stBaseButton-primary"] p,
     button[data-testid="stBaseButton-primary"] span,
@@ -375,8 +375,8 @@ def _build_editorial_css(is_dark: bool = False) -> str:
     }}
     button[data-testid="stBaseButton-primary"]:hover,
     .stDownloadButton > button[kind="primary"]:hover {{
-        background: linear-gradient(135deg, #115E59 0%, #0F766E 100%) !important;
-        box-shadow: 0 6px 18px -4px rgba(13, 148, 136, 0.52) !important;
+        background: linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%) !important;
+        box-shadow: 0 6px 18px -4px rgba(29, 78, 216, 0.52) !important;
     }}
 
     .stButton > button,
@@ -439,7 +439,7 @@ def _build_editorial_css(is_dark: bool = False) -> str:
         left: 0;
         right: 0;
         height: 2px;
-        background: linear-gradient(90deg, #14B8A6 0%, rgba(56, 189, 248, 0.65) 55%, transparent 100%);
+        background: linear-gradient(90deg, #1D4ED8 0%, #E11D48 55%, #F97316 100%);
     }}
     div[data-testid="stMetric"]:hover {{
         transform: translate3d(0, -2px, 0);
@@ -539,7 +539,7 @@ def _build_editorial_css(is_dark: bool = False) -> str:
 
 
 def inject_custom_css(is_dark: bool = False, page_title: str = "Overview") -> None:
-    """Inject Verdigris & Obsidian CSS at top of render tree so navbar & cards paint with zero FOUC."""
+    """Inject Solaris Editorial CSS at top of render tree so navbar & cards paint with zero FOUC."""
     st.session_state["_cg_is_dark"] = is_dark
     st.session_state["_cg_page_title"] = page_title
     css_block = _build_editorial_css(is_dark=is_dark)
@@ -547,7 +547,7 @@ def inject_custom_css(is_dark: bool = False, page_title: str = "Overview") -> No
 
 
 def render_brand_lockup() -> None:
-    """Render minimal geometric Verdigris mark + ChristGrade wordmark inside the floating navbar."""
+    """Render minimal geometric Solaris mark + ChristGrade wordmark inside the floating navbar."""
     st.html(
         """<div class="cg-brand">
             <span class="cg-brand-mark" aria-hidden="true">
@@ -602,7 +602,7 @@ def render_hero_strip(
 def build_sparkline_svg(
     values: list[float],
     *,
-    color: str = "#14B8A6",
+    color: str = "#2563EB",
     kind: str = "area",
     uid: str = "sp",
 ) -> str:
@@ -695,7 +695,7 @@ def render_footer() -> None:
                     }}
                 }}
                 upsertMeta('name', 'description', '{safe_desc}');
-                upsertMeta('name', 'theme-color', '{("#0B0E11" if is_dark else "#0F766E")}');
+                upsertMeta('name', 'theme-color', '{("#0A0D16" if is_dark else "#1D4ED8")}');
                 upsertMeta('property', 'og:title', '{safe_title}');
                 upsertMeta('property', 'og:description', '{safe_desc}');
                 upsertMeta('property', 'og:type', 'website');

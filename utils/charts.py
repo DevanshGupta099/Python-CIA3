@@ -1,4 +1,4 @@
-"""60fps Apache ECharts Canvas engine (Verdigris & Champagne gradients, zero-overlap layout) + Plotly/Seaborn suite."""
+"""60fps Apache ECharts Canvas engine (Solaris Editorial gradients, zero-overlap layout) + Plotly/Seaborn suite."""
 
 from __future__ import annotations
 
@@ -25,16 +25,16 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     import plotly.graph_objects as go
 
-# Verdigris & Champagne Curated Categorical Sequence
+# Solaris Editorial Categorical Sequence
 GRADIENT_SEQUENCE = [
-    "#14B8A6",  # Oceanic Teal
-    "#F59E0B",  # Champagne Amber
-    "#38BDF8",  # Cerulean Sky
-    "#10B981",  # Sage Emerald
-    "#FB923C",  # Terracotta
-    "#94A3B8",  # Cool Pewter
-    "#0D9488",  # Deep Verdigris
-    "#EAB308",  # Burnished Gold
+    "#2563EB",  # Royal Cobalt
+    "#F97316",  # Sunset Coral
+    "#E11D48",  # Crimson Rose
+    "#0EA5E9",  # Sky Azure
+    "#F59E0B",  # Champagne Gold
+    "#10B981",  # Emerald
+    "#1D4ED8",  # Deep Navy-Cobalt
+    "#FB7185",  # Soft Rose
 ]
 
 
@@ -44,13 +44,13 @@ GRADIENT_SEQUENCE = [
 
 def _ec_theme_tokens(is_dark: bool) -> dict[str, str]:
     return {
-        "text": "#E5E7EB" if is_dark else "#111827",
-        "muted": "#9CA3AF" if is_dark else "#4B5563",
-        "grid": "rgba(255, 255, 255, 0.065)" if is_dark else "rgba(15, 23, 42, 0.065)",
-        "axis": "rgba(255, 255, 255, 0.10)" if is_dark else "rgba(15, 23, 42, 0.10)",
-        "tooltip_bg": "rgba(15, 20, 26, 0.95)" if is_dark else "rgba(255, 255, 255, 0.97)",
-        "tooltip_border": "rgba(255, 255, 255, 0.12)" if is_dark else "rgba(15, 23, 42, 0.10)",
-        "card_bg": "#12171D" if is_dark else "#FFFFFF",
+        "text": "#E2E8F0" if is_dark else "#1E293B",
+        "muted": "#94A3B8" if is_dark else "#475569",
+        "grid": "rgba(148, 163, 184, 0.14)" if is_dark else "rgba(15, 23, 42, 0.08)",
+        "axis": "rgba(148, 163, 184, 0.22)" if is_dark else "rgba(15, 23, 42, 0.12)",
+        "tooltip_bg": "rgba(15, 23, 42, 0.94)" if is_dark else "rgba(255, 255, 255, 0.96)",
+        "tooltip_border": "rgba(148, 163, 184, 0.24)" if is_dark else "rgba(15, 23, 42, 0.10)",
+        "card_bg": "#121726" if is_dark else "#FFFFFF",
     }
 
 
@@ -200,8 +200,8 @@ def echarts_subject_breakdown(
             .round(1)
         )
         grad_pairs = {
-            "2MCA-A": ("#2DD4BF", "#0D9488"),
-            "2MCA-B": ("#FBBF24", "#D97706"),
+            "2MCA-A": ("#3B82F6", "#1D4ED8"),
+            "2MCA-B": ("#FB923C", "#EA580C"),
         }
         series = []
         for sec in ("2MCA-A", "2MCA-B"):
@@ -247,9 +247,9 @@ def echarts_subject_breakdown(
 
     if view_mode == "CIA % Compare":
         series_spec = [
-            ("CIA 1", "cia1_pct", "#14B8A6", "#0F766E"),
-            ("Mid-Sem", "cia2_pct", "#38BDF8", "#0284C7"),
-            ("CIA 3", "cia3_pct", "#FBBF24", "#D97706"),
+            ("CIA 1", "cia1_pct", "#3B82F6", "#1D4ED8"),
+            ("Mid-Sem", "cia2_pct", "#FB7185", "#E11D48"),
+            ("CIA 3", "cia3_pct", "#FB923C", "#EA580C"),
             ("End-Sem", "end_sem", "#34D399", "#059669"),
         ]
         series = [
@@ -273,11 +273,11 @@ def echarts_subject_breakdown(
         return spec
 
     stack_spec = [
-        ("CIA 1 (/10)", "cia1_w", "#0F766E", [0, 0, 0, 0]),
-        ("Mid-Sem (/25)", "cia2_w", "#14B8A6", [0, 0, 0, 0]),
-        ("CIA 3 (/10)", "cia3_w", "#F59E0B", [0, 0, 0, 0]),
-        ("Attendance (/5)", "att_marks", "#10B981", [0, 0, 0, 0]),
-        ("End-Sem (/50)", "ese_50", "#38BDF8", [6, 6, 0, 0]),
+        ("CIA 1 (/10)", "cia1_w", "#1D4ED8", [0, 0, 0, 0]),
+        ("Mid-Sem (/25)", "cia2_w", "#2563EB", [0, 0, 0, 0]),
+        ("CIA 3 (/10)", "cia3_w", "#F97316", [0, 0, 0, 0]),
+        ("Attendance (/5)", "att_marks", "#F59E0B", [0, 0, 0, 0]),
+        ("End-Sem (/50)", "ese_50", "#E11D48", [6, 6, 0, 0]),
     ]
     series = [
         {
@@ -307,8 +307,8 @@ def echarts_cia_progression(df: pd.DataFrame, is_dark: bool = False) -> dict[str
     stages = ["CIA 1", "Mid-Sem", "CIA 3", "End-Sem"]
     cols = ["cia1_pct", "cia2_pct", "cia3_pct", "end_sem"]
     palette_map = {
-        "2MCA-A": ("#14B8A6", "rgba(20, 184, 166, 0.28)", "rgba(20, 184, 166, 0.01)"),
-        "2MCA-B": ("#F59E0B", "rgba(245, 158, 11, 0.22)", "rgba(245, 158, 11, 0.01)"),
+        "2MCA-A": ("#2563EB", "rgba(37, 99, 235, 0.28)", "rgba(37, 99, 235, 0.02)"),
+        "2MCA-B": ("#E11D48", "rgba(225, 29, 72, 0.22)", "rgba(225, 29, 72, 0.02)"),
     }
 
     series = []
@@ -316,7 +316,7 @@ def echarts_cia_progression(df: pd.DataFrame, is_dark: bool = False) -> dict[str
         sub = df[df["section"] == sec]
         means = [round(float(sub[c].mean()), 1) for c in cols]
         line_c, top_c, bot_c = palette_map.get(
-            sec, ("#38BDF8", "rgba(56, 189, 248, 0.24)", "rgba(56, 189, 248, 0.01)")
+            sec, ("#F97316", "rgba(249, 115, 22, 0.24)", "rgba(249, 115, 22, 0.02)")
         )
         series.append(
             {
@@ -380,8 +380,8 @@ def echarts_cohort_gpa_trend(leaderboard_df: pd.DataFrame, is_dark: bool = False
     stages = ["Sem 1 SGPA", "Sem 2 SGPA", "Cum. CGPA"]
     cols = ["sem1_sgpa", "sem2_sgpa", "cgpa"]
     palette_map = {
-        "2MCA-A": ("#14B8A6", "rgba(20, 184, 166, 0.26)", "rgba(20, 184, 166, 0.01)"),
-        "2MCA-B": ("#F59E0B", "rgba(245, 158, 11, 0.22)", "rgba(245, 158, 11, 0.01)"),
+        "2MCA-A": ("#2563EB", "rgba(37, 99, 235, 0.26)", "rgba(37, 99, 235, 0.02)"),
+        "2MCA-B": ("#F97316", "rgba(249, 115, 22, 0.24)", "rgba(249, 115, 22, 0.02)"),
     }
 
     series = []
@@ -389,7 +389,7 @@ def echarts_cohort_gpa_trend(leaderboard_df: pd.DataFrame, is_dark: bool = False
         sub = leaderboard_df[leaderboard_df["section"] == sec]
         means = [round(float(sub[c].mean()), 2) for c in cols]
         line_c, top_c, bot_c = palette_map.get(
-            sec, ("#38BDF8", "rgba(56, 189, 248, 0.22)", "rgba(56, 189, 248, 0.01)")
+            sec, ("#E11D48", "rgba(225, 29, 72, 0.22)", "rgba(225, 29, 72, 0.02)")
         )
         series.append(
             {
@@ -455,7 +455,7 @@ def echarts_grade_distribution(
 
     if mode == "Sunburst":
         sun_data = []
-        sec_colors = {"2MCA-A": "#14B8A6", "2MCA-B": "#F59E0B"}
+        sec_colors = {"2MCA-A": "#2563EB", "2MCA-B": "#F97316"}
         for sec in sorted(df["section"].unique()):
             sub = df[df["section"] == sec]
             counts = sub["grade"].value_counts().reindex(GRADE_ORDER, fill_value=0)
@@ -471,7 +471,7 @@ def echarts_grade_distribution(
             sun_data.append(
                 {
                     "name": sec,
-                    "itemStyle": {"color": sec_colors.get(sec, "#14B8A6")},
+                    "itemStyle": {"color": sec_colors.get(sec, "#2563EB")},
                     "children": children,
                 }
             )
@@ -604,9 +604,9 @@ def echarts_statistical_coupling(
                     "show": False,
                     "inRange": {
                         "color": (
-                            ["#17202A", "#134E4A", "#0D9488", "#14B8A6", "#38BDF8"]
+                            ["#1E293B", "#1D4ED8", "#3B82F6", "#E11D48", "#FB923C"]
                             if is_dark
-                            else ["#F1F5F9", "#CCFBF1", "#5EEAD4", "#14B8A6", "#0F766E"]
+                            else ["#FFF7ED", "#DBEAFE", "#60A5FA", "#2563EB", "#E11D48"]
                         )
                     },
                 },
@@ -628,7 +628,7 @@ def echarts_statistical_coupling(
         )
         return spec
 
-    sec_colors = {"2MCA-A": "#14B8A6", "2MCA-B": "#F59E0B"}
+    sec_colors = {"2MCA-A": "#2563EB", "2MCA-B": "#F97316"}
     series = []
     for sec in sorted(df["section"].unique()):
         sub = df[df["section"] == sec]
@@ -642,7 +642,7 @@ def echarts_statistical_coupling(
                 "type": "scatter",
                 "symbolSize": 8,
                 "universalTransition": True,
-                "itemStyle": {"color": sec_colors.get(sec, "#14B8A6"), "opacity": 0.82},
+                "itemStyle": {"color": sec_colors.get(sec, "#2563EB"), "opacity": 0.84},
                 "data": pts,
             }
         )
@@ -658,7 +658,7 @@ def echarts_statistical_coupling(
                 "type": "line",
                 "showSymbol": False,
                 "data": [[x0, round(float(slope * x0 + intercept), 1)], [x1, round(float(slope * x1 + intercept), 1)]],
-                "lineStyle": {"color": "#38BDF8", "width": 2.5, "type": "dashed"},
+                "lineStyle": {"color": "#E11D48", "width": 2.6, "type": "dashed"},
             }
         )
 
@@ -753,18 +753,18 @@ def echarts_student_radar(
                             "value": avg_vals,
                             "symbol": "circle",
                             "symbolSize": 5,
-                            "lineStyle": {"color": "#94A3B8", "width": 2, "type": "dashed"},
-                            "itemStyle": {"color": "#94A3B8"},
-                            "areaStyle": {"color": "rgba(148, 163, 184, 0.08)"},
+                            "lineStyle": {"color": "#E11D48", "width": 2, "type": "dashed"},
+                            "itemStyle": {"color": "#E11D48"},
+                            "areaStyle": {"color": "rgba(225, 29, 72, 0.08)"},
                         },
                         {
                             "name": "Selected Student",
                             "value": stu_vals,
                             "symbol": "circle",
                             "symbolSize": 7,
-                            "lineStyle": {"color": "#14B8A6", "width": 3},
-                            "itemStyle": {"color": "#14B8A6"},
-                            "areaStyle": {"color": "rgba(20, 184, 166, 0.24)"},
+                            "lineStyle": {"color": "#2563EB", "width": 3},
+                            "itemStyle": {"color": "#2563EB"},
+                            "areaStyle": {"color": "rgba(37, 99, 235, 0.25)"},
                         },
                     ],
                 }
@@ -781,7 +781,7 @@ def echarts_subject_quartiles(
     kind: str = "Box Plot",
     is_dark: bool = False,
 ) -> dict[str, Any]:
-    """Smooth Boxplot / Spread Bars with Champagne Amber diamond student overlay."""
+    """Smooth Boxplot / Spread Bars with Coral diamond student overlay."""
     tok = _ec_theme_tokens(is_dark)
     spec = _ec_base(is_dark)
     if full_df.empty:
@@ -809,8 +809,8 @@ def echarts_subject_quartiles(
                 "data": box_data,
                 "universalTransition": True,
                 "itemStyle": {
-                    "color": "rgba(20, 184, 166, 0.18)",
-                    "borderColor": "#14B8A6",
+                    "color": "rgba(37, 99, 235, 0.20)",
+                    "borderColor": "#2563EB",
                     "borderWidth": 2,
                 },
             }
@@ -834,8 +834,8 @@ def echarts_subject_quartiles(
                     "barMaxWidth": 32,
                     "universalTransition": True,
                     "itemStyle": {
-                        "color": "rgba(20, 184, 166, 0.28)",
-                        "borderColor": "#14B8A6",
+                        "color": "rgba(14, 165, 233, 0.34)",
+                        "borderColor": "#0EA5E9",
                         "borderWidth": 1.5,
                         "borderRadius": 6,
                     },
@@ -847,8 +847,8 @@ def echarts_subject_quartiles(
                     "smooth": 0.3,
                     "symbol": "circle",
                     "symbolSize": 6,
-                    "lineStyle": {"color": "#94A3B8", "width": 2, "type": "dashed"},
-                    "itemStyle": {"color": "#94A3B8"},
+                    "lineStyle": {"color": "#64748B", "width": 2, "type": "dashed"},
+                    "itemStyle": {"color": "#64748B"},
                     "data": mean_vals,
                 },
             ]
@@ -868,8 +868,8 @@ def echarts_subject_quartiles(
                 "symbol": "diamond",
                 "symbolSize": 13,
                 "universalTransition": True,
-                "lineStyle": {"color": "#F59E0B", "width": 2.4, "type": "dotted"},
-                "itemStyle": {"color": "#F59E0B", "borderColor": tok["card_bg"], "borderWidth": 2},
+                "lineStyle": {"color": "#F97316", "width": 2.4, "type": "dotted"},
+                "itemStyle": {"color": "#F97316", "borderColor": tok["card_bg"], "borderWidth": 2},
                 "z": 5,
             }
         )
@@ -961,8 +961,8 @@ def echarts_semester_gpa_trend(
                     "data": cohort_curve,
                     "symbol": "circle",
                     "symbolSize": 6,
-                    "lineStyle": {"color": "#94A3B8", "width": 2, "type": "dashed"},
-                    "itemStyle": {"color": "#94A3B8"},
+                    "lineStyle": {"color": "#64748B", "width": 2, "type": "dashed"},
+                    "itemStyle": {"color": "#64748B"},
                 },
                 {
                     "name": "Cum. CGPA",
@@ -971,8 +971,8 @@ def echarts_semester_gpa_trend(
                     "data": cgpa_curve,
                     "symbol": "circle",
                     "symbolSize": 7,
-                    "lineStyle": {"color": "#F59E0B", "width": 2.5},
-                    "itemStyle": {"color": "#F59E0B"},
+                    "lineStyle": {"color": "#E11D48", "width": 2.6},
+                    "itemStyle": {"color": "#E11D48"},
                 },
                 {
                     "name": "Student SGPA",
@@ -981,11 +981,11 @@ def echarts_semester_gpa_trend(
                     "data": stu_sgpa,
                     "symbol": "circle",
                     "symbolSize": 9,
-                    "lineStyle": {"color": "#14B8A6", "width": 3.2},
-                    "itemStyle": {"color": "#14B8A6", "borderColor": tok["card_bg"], "borderWidth": 2},
+                    "lineStyle": {"color": "#2563EB", "width": 3.2},
+                    "itemStyle": {"color": "#2563EB", "borderColor": tok["card_bg"], "borderWidth": 2},
                     "areaStyle": {
                         "color": _linear_grad(
-                            0, 0, 0, 1, "rgba(20, 184, 166, 0.26)", "rgba(20, 184, 166, 0.01)"
+                            0, 0, 0, 1, "rgba(37, 99, 235, 0.24)", "rgba(37, 99, 235, 0.01)"
                         )
                     },
                     "label": {"show": True, "position": "top", "distance": 6, "color": tok["text"], "fontSize": 10.5},
@@ -1021,27 +1021,27 @@ def echarts_predictor_feasibility(
             "type": "line",
             "showSymbol": False,
             "data": traj_pts,
-            "lineStyle": {"color": "#14B8A6", "width": 3.2},
+            "lineStyle": {"color": "#2563EB", "width": 3.2},
             "markLine": {
                 "silent": True,
                 "symbol": "none",
-                "lineStyle": {"color": "#F43F5E", "type": "dashed", "width": 1.6},
-                "label": {"formatter": "Min 40", "position": "insideEndTop", "color": "#F43F5E", "fontSize": 10},
+                "lineStyle": {"color": "#E11D48", "type": "dashed", "width": 1.6},
+                "label": {"formatter": "Min 40", "position": "insideEndTop", "color": "#E11D48", "fontSize": 10},
                 "data": [{"xAxis": float(MIN_ESE_PASS_MARKS)}],
             },
             "markArea": {
                 "silent": True,
                 "data": [
                     [
-                        {"name": "O (90+)", "yAxis": 90, "itemStyle": {"color": "rgba(16, 185, 129, 0.08)"}, "label": {"position": "insideRight", "color": tok["muted"], "fontSize": 10}},
+                        {"name": "O (90+)", "yAxis": 90, "itemStyle": {"color": "rgba(16, 185, 129, 0.09)"}, "label": {"position": "insideRight", "color": tok["muted"], "fontSize": 10}},
                         {"yAxis": 100},
                     ],
                     [
-                        {"name": "A+ (80+)", "yAxis": 80, "itemStyle": {"color": "rgba(20, 184, 166, 0.06)"}, "label": {"position": "insideRight", "color": tok["muted"], "fontSize": 10}},
+                        {"name": "A+ (80+)", "yAxis": 80, "itemStyle": {"color": "rgba(37, 99, 235, 0.08)"}, "label": {"position": "insideRight", "color": tok["muted"], "fontSize": 10}},
                         {"yAxis": 90},
                     ],
                     [
-                        {"xAxis": round(float(ml_lo), 1), "itemStyle": {"color": "rgba(56, 189, 248, 0.08)"}},
+                        {"xAxis": round(float(ml_lo), 1), "itemStyle": {"color": "rgba(225, 29, 72, 0.08)"}},
                         {"xAxis": round(float(ml_hi), 1)},
                     ],
                 ],
@@ -1052,7 +1052,7 @@ def echarts_predictor_feasibility(
             "type": "effectScatter",
             "symbolSize": 11,
             "rippleEffect": {"scale": 2.3, "brushType": "stroke"},
-            "itemStyle": {"color": "#38BDF8"},
+            "itemStyle": {"color": "#E11D48"},
             "label": {
                 "show": True,
                 "position": "bottom",
@@ -1074,7 +1074,7 @@ def echarts_predictor_feasibility(
                 "symbol": "diamond",
                 "symbolSize": 13,
                 "rippleEffect": {"scale": 2.1, "brushType": "stroke"},
-                "itemStyle": {"color": "#F59E0B"},
+                "itemStyle": {"color": "#F97316"},
                 "label": {
                     "show": True,
                     "position": "top",
@@ -1121,7 +1121,7 @@ def echarts_predictor_feasibility(
 
 
 def echarts_feature_importance(imp_df: pd.DataFrame, is_dark: bool = False) -> dict[str, Any]:
-    """Horizontal Verdigris-to-Cyan gradient bar chart of scikit-learn feature importances."""
+    """Horizontal Solaris gradient bar chart of scikit-learn feature importances."""
     tok = _ec_theme_tokens(is_dark)
     spec = _ec_base(is_dark)
     feats = [str(f) for f in imp_df["Feature"].tolist()]
@@ -1157,7 +1157,7 @@ def echarts_feature_importance(imp_df: pd.DataFrame, is_dark: bool = False) -> d
                     "barMaxWidth": 20,
                     "data": vals,
                     "itemStyle": {
-                        "color": _linear_grad(0, 0, 1, 0, "#0F766E", "#2DD4BF"),
+                        "color": _linear_grad(0, 0, 1, 0, "#F97316", "#2563EB"),
                         "borderRadius": [0, 6, 6, 0],
                     },
                     "label": {
@@ -1233,7 +1233,7 @@ def echarts_explorer_chart(
                     "type": "line",
                     "showSymbol": False,
                     "data": [[x0, round(float(slope * x0 + intercept), 2)], [x1, round(float(slope * x1 + intercept), 2)]],
-                    "lineStyle": {"color": "#F59E0B", "width": 2.6, "type": "dashed"},
+                    "lineStyle": {"color": "#E11D48", "width": 2.6, "type": "dashed"},
                 }
             )
         spec.update(
@@ -1282,8 +1282,8 @@ def echarts_explorer_chart(
                 "data": box_data,
                 "universalTransition": True,
                 "itemStyle": {
-                    "color": "rgba(20, 184, 166, 0.18)" if is_box else "rgba(56, 189, 248, 0.18)",
-                    "borderColor": "#14B8A6" if is_box else "#38BDF8",
+                    "color": "rgba(37, 99, 235, 0.20)" if is_box else "rgba(225, 29, 72, 0.20)",
+                    "borderColor": "#2563EB" if is_box else "#E11D48",
                     "borderWidth": 2,
                 },
             },
@@ -1294,8 +1294,8 @@ def echarts_explorer_chart(
                 "symbol": "diamond",
                 "symbolSize": 9,
                 "data": mean_data,
-                "lineStyle": {"color": "#F59E0B", "width": 2.4, "type": "dotted"},
-                "itemStyle": {"color": "#F59E0B"},
+                "lineStyle": {"color": "#F97316", "width": 2.4, "type": "dotted"},
+                "itemStyle": {"color": "#F97316"},
             },
         ]
         spec.update(
@@ -1370,7 +1370,7 @@ def echarts_explorer_chart(
                 sb_df = s_df[s_df["subject_short"] == subj_short]
                 g_counts = sb_df["grade"].value_counts()
                 g_nodes = [
-                    {"name": str(g), "value": int(cnt), "itemStyle": {"color": GRADE_COLORS.get(str(g), "#14B8A6")}}
+                    {"name": str(g), "value": int(cnt), "itemStyle": {"color": GRADE_COLORS.get(str(g), "#2563EB")}}
                     for g, cnt in g_counts.items()
                 ]
                 subj_nodes.append({"name": str(subj_short), "children": g_nodes})
@@ -1433,7 +1433,7 @@ def echarts_explorer_chart(
                     "universalTransition": True,
                     "data": [round(float(v), 2) for v in ranked[y_col].tolist()],
                     "itemStyle": {
-                        "color": _linear_grad(0, 0, 1, 0, "#0F766E", "#2DD4BF"),
+                        "color": _linear_grad(0, 0, 1, 0, "#F97316", "#2563EB"),
                         "borderRadius": [0, 7, 7, 0],
                     },
                     "label": {"show": True, "position": "right", "color": tok["text"], "fontSize": 11},
@@ -1492,9 +1492,9 @@ def echarts_pivot_heatmap(piv_core: pd.DataFrame, is_dark: bool = False) -> dict
                 "show": False,
                 "inRange": {
                     "color": (
-                        ["#15202B", "#0F766E", "#2DD4BF"]
+                        ["#172554", "#2563EB", "#E11D48"]
                         if is_dark
-                        else ["#F0FDFA", "#5EEAD4", "#0F766E"]
+                        else ["#EFF6FF", "#60A5FA", "#2563EB", "#E11D48"]
                     )
                 },
             },
@@ -1554,7 +1554,7 @@ def echarts_policy_sim(
                     "barMaxWidth": 24,
                     "data": [int(v) for v in after_counts.reindex(GRADE_ORDER, fill_value=0).tolist()],
                     "itemStyle": {
-                        "color": _linear_grad(0, 0, 0, 1, "#2DD4BF", "#0D9488"),
+                        "color": _linear_grad(0, 0, 0, 1, "#3B82F6", "#1D4ED8"),
                         "borderRadius": [6, 6, 0, 0],
                     },
                     "label": {"show": True, "position": "top", "color": tok["text"], "fontSize": 10.5},
@@ -1639,9 +1639,9 @@ def subject_cia_breakdown_chart(df: pd.DataFrame, view_mode: str = "Stacked CIA"
 
     if view_mode == "CIA % Compare":
         for label, col, color in [
-            ("CIA 1 (%)", "cia1_pct", "#14B8A6"),
-            ("Mid-Sem CIA 2 (%)", "cia2_pct", "#38BDF8"),
-            ("CIA 3 Assignment (%)", "cia3_pct", "#F59E0B"),
+            ("CIA 1 (%)", "cia1_pct", "#2563EB"),
+            ("Mid-Sem CIA 2 (%)", "cia2_pct", "#E11D48"),
+            ("CIA 3 Assignment (%)", "cia3_pct", "#F97316"),
             ("End-Sem (%)", "end_sem", "#10B981"),
         ]:
             fig.add_trace(go.Bar(name=label, x=labels, y=agg[col], marker=dict(color=color, cornerradius=6)))
@@ -1649,11 +1649,11 @@ def subject_cia_breakdown_chart(df: pd.DataFrame, view_mode: str = "Stacked CIA"
         return _apply_clean_axes(fig, y_title="Normalized Percentage (%)")
 
     for label, col, color in [
-        ("CIA 1 (/10)", "cia1_w", "#0F766E"),
-        ("Mid-Sem CIA 2 (/25)", "cia2_w", "#14B8A6"),
-        ("CIA 3 (/10)", "cia3_w", "#F59E0B"),
-        ("Attendance (/5)", "att_marks", "#10B981"),
-        ("End-Sem (/50)", "ese_50", "#38BDF8"),
+        ("CIA 1 (/10)", "cia1_w", "#1D4ED8"),
+        ("Mid-Sem CIA 2 (/25)", "cia2_w", "#2563EB"),
+        ("CIA 3 (/10)", "cia3_w", "#F97316"),
+        ("Attendance (/5)", "att_marks", "#F59E0B"),
+        ("End-Sem (/50)", "ese_50", "#E11D48"),
     ]:
         fig.add_trace(go.Bar(name=label, x=labels, y=agg[col], marker=dict(color=color, cornerradius=4)))
     fig.update_layout(barmode="stack", yaxis_range=[0, 103])
@@ -1709,7 +1709,7 @@ def grade_distribution_chart(df: pd.DataFrame, mode: str = "Donut") -> go.Figure
             path=["section", "grade"],
             values="count",
             color="grade",
-            color_discrete_map={**GRADE_COLORS, "(?)": "#14B8A6"},
+            color_discrete_map={**GRADE_COLORS, "(?)": "#2563EB"},
         )
         fig.update_layout(**_BASE_LAYOUT)
         return fig
@@ -1838,13 +1838,13 @@ def seaborn_statistical_figure(
     mode: str = "Correlation Heatmap",
     is_dark: bool = False,
 ) -> plt.Figure:
-    """Render a crisp, exact-sized Seaborn statistical plot in the Verdigris & Amber palette."""
+    """Render a crisp, exact-sized Seaborn statistical plot in the Solaris palette."""
     from matplotlib.colors import LinearSegmentedColormap
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    text_col = "#E5E7EB" if is_dark else "#111827"
-    muted_col = "#9CA3AF" if is_dark else "#4B5563"
+    text_col = "#E2E8F0" if is_dark else "#1E293B"
+    muted_col = "#94A3B8" if is_dark else "#475569"
 
     sns.set_theme(style="white")
     fig, ax = plt.subplots(figsize=(5.6, 3.45), dpi=100)
@@ -1852,10 +1852,10 @@ def seaborn_statistical_figure(
     ax.set_facecolor("none")
 
     cmap = LinearSegmentedColormap.from_list(
-        "christgrade_verdigris",
-        ["#FEF3C7", "#F0FDFA", "#5EEAD4", "#14B8A6", "#0F766E"]
+        "christgrade_solaris",
+        ["#FDBA74", "#FFF7ED", "#93C5FD", "#2563EB", "#E11D48"]
         if not is_dark
-        else ["#17202A", "#134E4A", "#0D9488", "#2DD4BF", "#38BDF8"],
+        else ["#F97316", "#1E293B", "#2563EB", "#60A5FA", "#FB7185"],
     )
 
     if df.empty or len(df) < 3:
@@ -1900,7 +1900,7 @@ def seaborn_statistical_figure(
             x="internal_50",
             y="end_sem",
             fill=True,
-            cmap="crest" if not is_dark else "mako",
+            cmap="rocket_r" if not is_dark else "mako",
             alpha=0.72,
             levels=7,
             thresh=0.05,
@@ -1911,7 +1911,7 @@ def seaborn_statistical_figure(
             x="internal_50",
             y="end_sem",
             hue="section",
-            palette={"2MCA-A": "#14B8A6", "2MCA-B": "#F59E0B"},
+            palette={"2MCA-A": "#2563EB", "2MCA-B": "#F97316"},
             s=24,
             alpha=0.85,
             edgecolor="white",

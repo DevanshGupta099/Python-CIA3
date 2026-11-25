@@ -1,4 +1,4 @@
-"""Executive Cohort Overview: Verdigris & Obsidian Editorial Design, 60fps Canvas & Zero Overlap."""
+"""Executive Cohort Overview: Solaris Editorial Design, 60fps Canvas & Zero Overlap."""
 
 from __future__ import annotations
 

@@ -11,7 +11,7 @@
 
 ## Overview
 
-**ChristGrade (`v2.4.0`)** is an interactive, real-time Academic Performance Analytics Dashboard and End-Semester Target Score Predictor built with **Python** and **Streamlit** for CHRIST University MCA students and faculty. Crafted with the **Verdigris & Obsidian** design system (**Verdigris Teal × Emerald × Cerulean × Champagne Amber**), a bespoke **Floating Glass Command Navbar**, a **60fps Apache ECharts Canvas engine** (with preserved **Plotly** & **Seaborn** analytical suites), `@view-transition` + spring-eased UI motion, `@st.fragment` partial reruns, and `@st.cache_data` pipelines, it tracks **CIA 1 (`/20`)**, **Mid-Semester / CIA 2 (`/50`)**, **CIA 3 Assignment (`/20`)**, **Attendance eligibility (`85%` rule, `/5`)**, and **End-Semester Exam (`/100`)** outcomes across `2MCA-A` and `2MCA-B`.
+**ChristGrade (`v2.4.0`)** is an interactive, real-time Academic Performance Analytics Dashboard and End-Semester Target Score Predictor built with **Python** and **Streamlit** for CHRIST University MCA students and faculty. Crafted with the **Solaris Editorial** design system (**Royal Cobalt × Crimson Rose × Sunset Coral × Champagne Gold**), a bespoke **Floating Glass Command Navbar**, a **60fps Apache ECharts Canvas engine** (with preserved **Plotly** & **Seaborn** analytical suites), `@view-transition` + spring-eased UI motion, `@st.fragment` partial reruns, and `@st.cache_data` pipelines, it tracks **CIA 1 (`/20`)**, **Mid-Semester / CIA 2 (`/50`)**, **CIA 3 Assignment (`/20`)**, **Attendance eligibility (`85%` rule, `/5`)**, and **End-Semester Exam (`/100`)** outcomes across `2MCA-A` and `2MCA-B`.
 
 ### Core Modules & Capabilities
 1. **Executive Cohort Overview (`views/overview.py`)**

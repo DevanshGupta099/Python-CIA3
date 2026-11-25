@@ -213,7 +213,7 @@ def _render_student_workspace(
     with b_col.container(border=True, height="stretch"):
         b_ctrl = card_header(
             "Standing Across Cohort Quartiles",
-            "Amber diamonds locate the student within each subject's class distribution",
+            "Coral diamonds locate the student within each subject's class distribution",
         )
         dist_metric = b_ctrl.segmented_control(
             "Metric",
