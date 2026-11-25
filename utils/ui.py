@@ -1,4 +1,4 @@
-"""Solaris Editorial UI Design System: Zero-CLS reserved geometry, WCAG AA contrast, SEO head & SVG sparklines."""
+"""Verdigris & Obsidian Design System: Floating Glass Navbar, Recessed Pill Controls & Zero-Overlap Typography."""
 
 from __future__ import annotations
 
@@ -12,59 +12,98 @@ from utils.constants import DEFINITIONS
 if TYPE_CHECKING:
     from streamlit.delta_generator import DeltaGenerator
 
-VERIFIED_BADGE = ":blue-badge[:material/verified:]"
-
 _META_DESCRIPTION = (
     "ChristGrade: Real-Time CHRIST University 2MCA CIA Academic Performance Analytics Dashboard, "
     "6-Axis Student Radar, SQLite3 CRUD Manager, and End-Semester Target Score Predictor."
 )
 
 
-def _build_solaris_css(is_dark: bool = False) -> str:
-    """Return theme-aware Solaris Editorial CSS with zero-CLS chart slot reservations and WCAG AA contrast."""
-    card_bg = "#121726" if is_dark else "#FFFFFF"
-    card_border = "rgba(148, 163, 184, 0.18)" if is_dark else "rgba(15, 23, 42, 0.085)"
+def _build_editorial_css(is_dark: bool = False) -> str:
+    """Build architectural Verdigris & Obsidian CSS with floating glass navbar and spring transitions."""
+    bg_ambient = (
+        "radial-gradient(ellipse 75% 260px at 50% -70px, rgba(20, 184, 166, 0.11), transparent 70%), "
+        "radial-gradient(ellipse 45% 200px at 88% 0px, rgba(56, 189, 248, 0.06), transparent 65%)"
+        if is_dark
+        else "radial-gradient(ellipse 75% 240px at 50% -80px, rgba(13, 148, 136, 0.07), transparent 70%), "
+        "radial-gradient(ellipse 45% 180px at 88% 0px, rgba(2, 132, 199, 0.045), transparent 65%)"
+    )
+    nav_bg = "rgba(18, 23, 29, 0.82)" if is_dark else "rgba(255, 255, 255, 0.86)"
+    nav_border = "rgba(255, 255, 255, 0.08)" if is_dark else "rgba(15, 23, 42, 0.08)"
+    nav_shadow = (
+        "0 8px 30px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+        if is_dark
+        else "0 4px 20px -6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.03)"
+    )
+    dock_bg = "rgba(8, 10, 13, 0.65)" if is_dark else "#EFF2F1"
+    dock_border = "rgba(255, 255, 255, 0.06)" if is_dark else "rgba(15, 23, 42, 0.06)"
+    nav_active_bg = (
+        "linear-gradient(180deg, rgba(20, 184, 166, 0.20) 0%, rgba(13, 148, 136, 0.11) 100%)"
+        if is_dark
+        else "#FFFFFF"
+    )
+    nav_active_border = "rgba(45, 212, 191, 0.36)" if is_dark else "rgba(15, 118, 110, 0.22)"
+    nav_active_text = "#5EEAD4" if is_dark else "#0F766E"
+    nav_active_shadow = (
+        "0 2px 10px -2px rgba(20, 184, 166, 0.22)"
+        if is_dark
+        else "0 1px 3px rgba(15, 23, 42, 0.08)"
+    )
+    nav_idle_text = "#9CA3AF" if is_dark else "#4B5563"
+    nav_hover_bg = "rgba(255, 255, 255, 0.045)" if is_dark else "rgba(15, 23, 42, 0.04)"
+    nav_hover_text = "#F3F4F6" if is_dark else "#111827"
+
+    card_bg = (
+        "linear-gradient(180deg, #141A21 0%, #11161C 100%)"
+        if is_dark
+        else "#FFFFFF"
+    )
+    card_border = "rgba(255, 255, 255, 0.075)" if is_dark else "rgba(17, 24, 39, 0.08)"
     card_shadow = (
-        "0 4px 18px -4px rgba(0, 0, 0, 0.42)"
+        "0 6px 24px -8px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.045)"
         if is_dark
-        else "0 1px 2px rgba(15, 23, 42, 0.035), 0 8px 22px -8px rgba(15, 23, 42, 0.06)"
+        else "0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 28px -10px rgba(15, 23, 42, 0.055)"
     )
-    hover_border = "rgba(96, 165, 250, 0.45)" if is_dark else "rgba(29, 78, 216, 0.34)"
+    hover_border = "rgba(45, 212, 191, 0.32)" if is_dark else "rgba(13, 148, 136, 0.28)"
     hover_shadow = (
-        "0 10px 26px -6px rgba(37, 99, 235, 0.24)"
+        "0 12px 32px -8px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(45, 212, 191, 0.12)"
         if is_dark
-        else "0 12px 26px -8px rgba(29, 78, 216, 0.13)"
+        else "0 14px 32px -10px rgba(13, 148, 136, 0.11)"
     )
-    hero_bg = (
-        "radial-gradient(circle at 8% 15%, rgba(59, 130, 246, 0.22), transparent 45%), "
-        "radial-gradient(circle at 88% 20%, rgba(244, 63, 94, 0.18), transparent 42%), "
-        "radial-gradient(circle at 75% 90%, rgba(249, 115, 22, 0.15), transparent 45%), "
-        "linear-gradient(135deg, #101626 0%, #161D31 100%)"
-        if is_dark
-        else "radial-gradient(circle at 6% 15%, rgba(29, 78, 216, 0.10), transparent 42%), "
-        "radial-gradient(circle at 90% 18%, rgba(225, 29, 72, 0.08), transparent 40%), "
-        "radial-gradient(circle at 76% 92%, rgba(249, 115, 22, 0.08), transparent 45%), "
-        "linear-gradient(135deg, #FFFFFF 0%, #FBFBFD 100%)"
-    )
-    hero_border = "rgba(251, 113, 133, 0.26)" if is_dark else "rgba(29, 78, 216, 0.16)"
-    eyebrow_color = "#93C5FD" if is_dark else "#1D4ED8"
-    title_color = "#F8FAFC" if is_dark else "#0F172A"
-    pill_bg = "rgba(255, 255, 255, 0.075)" if is_dark else "rgba(15, 23, 42, 0.045)"
-    pill_text = "#F1F5F9" if is_dark else "#1E293B"
-    muted_text = "#CBD5E1" if is_dark else "#475569"
-    seg_active_fg = "#93C5FD" if is_dark else "#1D4ED8"
-    seg_active_bg = "rgba(59, 130, 246, 0.18)" if is_dark else "rgba(29, 78, 216, 0.10)"
-    seg_active_border = "rgba(96, 165, 250, 0.55)" if is_dark else "rgba(29, 78, 216, 0.42)"
+
+    seg_track_bg = "#0A0D10" if is_dark else "#EEF1F0"
+    seg_track_border = "rgba(255, 255, 255, 0.07)" if is_dark else "rgba(15, 23, 42, 0.07)"
+    seg_active_bg = "#18212A" if is_dark else "#FFFFFF"
+    seg_active_fg = "#5EEAD4" if is_dark else "#0F766E"
+    seg_active_border = "rgba(45, 212, 191, 0.35)" if is_dark else "rgba(15, 118, 110, 0.22)"
+    seg_idle_fg = "#9CA3AF" if is_dark else "#4B5563"
+
+    title_color = "#F9FAFB" if is_dark else "#111827"
+    muted_text = "#9CA3AF" if is_dark else "#4B5563"
+    subtle_line = "rgba(255, 255, 255, 0.07)" if is_dark else "rgba(15, 23, 42, 0.075)"
+    stat_pill_bg = "rgba(255, 255, 255, 0.04)" if is_dark else "rgba(15, 23, 42, 0.035)"
 
     return f"""
     <style>
-    @keyframes cgSparkDraw {{
-        from {{ stroke-dashoffset: 240; }}
-        to   {{ stroke-dashoffset: 0; }}
+    @view-transition {{
+        navigation: auto;
     }}
-    @keyframes cgBarGrow {{
-        from {{ transform: scaleY(0.18); }}
-        to   {{ transform: scaleY(1); }}
+
+    @keyframes cgSmoothSettle {{
+        from {{
+            opacity: 0.96;
+            transform: translate3d(0, 3px, 0);
+        }}
+        to {{
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }}
+    }}
+
+    /* Hide utility style/SEO carrier containers so they add 0px height and 0px flex gap */
+    div[data-testid="stElementContainer"]:has(.cg-hidden-util) {{
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }}
 
     /* Zero-flicker reruns: never dim existing DOM during fast fragment updates */
@@ -75,69 +114,257 @@ def _build_solaris_css(is_dark: bool = False) -> str:
         transition: none !important;
     }}
 
-    /* Explicit header logo geometry to prevent CLS on load */
-    img[data-testid="stHeaderLogo"],
-    img.stLogo {{
-        height: 28px !important;
-        width: auto !important;
+    /* Ambient top spotlight & smooth page container breathing room */
+    div[data-testid="stAppViewContainer"] {{
+        background-image: {bg_ambient} !important;
+        background-repeat: no-repeat !important;
+    }}
+    div[data-testid="stMainBlockContainer"] {{
+        max-width: 1400px !important;
+        padding-top: 2.1rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        animation: cgSmoothSettle 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }}
+    @media (max-width: 768px) {{
+        div[data-testid="stMainBlockContainer"] {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }}
     }}
 
-    /* Zero-CLS Reserved Heights for Async Chart & Grid Containers */
-    .st-key-ov_breakdown_chart,
-    .st-key-ov_traj_chart {{
-        min-height: 335px;
+    /* Make Streamlit's built-in outer chrome minimal & unobtrusive */
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+        height: 2.1rem !important;
     }}
-    .st-key-ov_grade_chart,
-    .st-key-ov_leaderboard_table {{
-        min-height: 355px;
-    }}
-    .st-key-ov_coupling_chart {{
-        min-height: 345px;
-    }}
-    .st-key-stu_radar_chart,
-    .st-key-stu_quartile_chart {{
-        min-height: 330px;
-    }}
-    .st-key-stu_gpa_trend_chart {{
-        min-height: 315px;
-    }}
-    .st-key-pred_feasibility_chart {{
-        min-height: 310px;
-    }}
-    .st-key-pred_feat_imp_chart {{
-        min-height: 240px;
-    }}
-    .st-key-ds_explorer_chart {{
-        min-height: 405px;
-    }}
-
-    /* Top Solaris accent ribbon */
     header[data-testid="stHeader"]::before {{
         content: "";
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
-        background: linear-gradient(
-            90deg,
-            #1D4ED8 0%,
-            #2563EB 28%,
-            #E11D48 56%,
-            #F97316 80%,
-            #F59E0B 100%
-        );
+        height: 2.5px;
+        background: linear-gradient(90deg, #0F766E 0%, #14B8A6 38%, #38BDF8 72%, #F59E0B 100%);
         z-index: 999999;
         pointer-events: none;
     }}
 
-    /* WCAG AA >= 6.7:1 Primary Action Button Contrast (#FFFFFF on #1D4ED8) */
+    /* =====================================================================
+       CUSTOM FLOATING GLASS NAVBAR (.st-key-cg_top_navbar)
+       ===================================================================== */
+    div.st-key-cg_top_navbar {{
+        background: {nav_bg} !important;
+        backdrop-filter: blur(16px) saturate(140%);
+        -webkit-backdrop-filter: blur(16px) saturate(140%);
+        border: 1px solid {nav_border} !important;
+        border-radius: 16px !important;
+        padding: 0.5rem 0.95rem !important;
+        box-shadow: {nav_shadow} !important;
+        margin-bottom: 0.65rem !important;
+    }}
+
+    /* Brand lockup inside Navbar */
+    .cg-brand {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.62rem;
+        padding: 0.15rem 0.35rem 0.15rem 0.1rem;
+        white-space: nowrap;
+        user-select: none;
+    }}
+    .cg-brand-mark {{
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #0F766E 0%, #14B8A6 55%, #0284C7 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px -2px rgba(20, 184, 166, 0.45);
+        flex-shrink: 0;
+    }}
+    .cg-brand-name {{
+        font-size: 1.02rem;
+        font-weight: 750;
+        letter-spacing: -0.025em;
+        color: {title_color};
+        line-height: 1.1;
+    }}
+    .cg-brand-tag {{
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: {muted_text};
+        padding: 0.14rem 0.48rem;
+        border-radius: 6px;
+        background: {stat_pill_bg};
+        border: 1px solid {subtle_line};
+    }}
+
+    /* Recessed Navigation Pill Dock (.st-key-cg_nav_dock) */
+    div.st-key-cg_nav_dock {{
+        background: {dock_bg} !important;
+        border: 1px solid {dock_border} !important;
+        border-radius: 12px !important;
+        padding: 0.22rem 0.28rem !important;
+        gap: 0.2rem !important;
+    }}
+    div.st-key-cg_nav_dock div[data-testid="stPageLink"] {{
+        width: auto !important;
+    }}
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"] {{
+        border-radius: 9px !important;
+        padding: 0.36rem 0.78rem !important;
+        margin: 0 !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+        transition:
+            background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.2s ease,
+            color 0.18s ease,
+            transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.2s ease !important;
+    }}
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"] p,
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"] span {{
+        font-size: 0.835rem !important;
+        font-weight: 550 !important;
+        color: {nav_idle_text} !important;
+        letter-spacing: -0.008em;
+        transition: color 0.18s ease !important;
+    }}
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:hover {{
+        background: {nav_hover_bg} !important;
+        transform: translate3d(0, -0.5px, 0);
+    }}
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:hover p,
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:hover span {{
+        color: {nav_hover_text} !important;
+    }}
+    div.st-key-cg_nav_active_item a[data-testid="stPageLink-NavLink"],
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:has(strong) {{
+        background: {nav_active_bg} !important;
+        border-color: {nav_active_border} !important;
+        box-shadow: {nav_active_shadow} !important;
+    }}
+    div.st-key-cg_nav_active_item a[data-testid="stPageLink-NavLink"] p,
+    div.st-key-cg_nav_active_item a[data-testid="stPageLink-NavLink"] span,
+    div.st-key-cg_nav_active_item a[data-testid="stPageLink-NavLink"] strong,
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:has(strong) strong,
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:has(strong) p,
+    div.st-key-cg_nav_dock a[data-testid="stPageLink-NavLink"]:has(strong) span {{
+        color: {nav_active_text} !important;
+        font-weight: 650 !important;
+    }}
+
+    /* =====================================================================
+       EDITORIAL PAGE HEADER & FILTER BAR (Clean, Non-AI, Generous Spacing)
+       ===================================================================== */
+    .cg-page-head {{
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        padding: 0.45rem 0.1rem 0.9rem 0.1rem;
+        border-bottom: 1px solid {subtle_line};
+        margin-bottom: 0.35rem;
+    }}
+    .cg-page-head h1 {{
+        font-size: 1.52rem !important;
+        font-weight: 750 !important;
+        letter-spacing: -0.028em !important;
+        line-height: 1.22 !important;
+        color: {title_color} !important;
+        margin: 0 0 0.28rem 0 !important;
+        padding: 0 !important;
+    }}
+    .cg-page-sub {{
+        font-size: 0.88rem;
+        line-height: 1.52;
+        color: {muted_text};
+        margin: 0;
+        max-width: 780px;
+    }}
+    .cg-meta-summary {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.79rem;
+        font-weight: 550;
+        font-variant-numeric: tabular-nums;
+        color: {muted_text};
+        padding: 0.36rem 0.78rem;
+        border-radius: 9px;
+        background: {stat_pill_bg};
+        border: 1px solid {subtle_line};
+        white-space: nowrap;
+    }}
+    .cg-live-dot {{
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10B981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }}
+
+    /* =====================================================================
+       RECESSED LINEAR / MACOS PILL SEGMENTED CONTROLS
+       ===================================================================== */
+    div[data-testid="stButtonGroup"] {{
+        background: {seg_track_bg} !important;
+        border: 1px solid {seg_track_border} !important;
+        border-radius: 10px !important;
+        padding: 3px !important;
+        gap: 2px !important;
+    }}
+    button[data-variant="segmented_control"] {{
+        border: 1px solid transparent !important;
+        border-radius: 7px !important;
+        background: transparent !important;
+        padding: 0.24rem 0.72rem !important;
+        min-height: 1.85rem !important;
+        transition:
+            background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+            color 0.18s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease !important;
+    }}
+    button[data-variant="segmented_control"] p {{
+        font-size: 0.8rem !important;
+        font-weight: 550 !important;
+        color: {seg_idle_fg} !important;
+        white-space: nowrap !important;
+    }}
+    button[data-variant="segmented_control"]:hover:not([data-selected="true"]):not([aria-checked="true"]) {{
+        background: {nav_hover_bg} !important;
+    }}
+    button[data-variant="segmented_control"][data-selected="true"],
+    button[data-variant="segmented_control"][aria-checked="true"],
+    button[data-testid="stBaseButton-pillsActive"] {{
+        background: {seg_active_bg} !important;
+        border-color: {seg_active_border} !important;
+        color: {seg_active_fg} !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18) !important;
+    }}
+    button[data-variant="segmented_control"][data-selected="true"] p,
+    button[data-variant="segmented_control"][aria-checked="true"] p,
+    button[data-testid="stBaseButton-pillsActive"] p {{
+        color: {seg_active_fg} !important;
+        font-weight: 650 !important;
+    }}
+
+    /* =====================================================================
+       PRIMARY ACTION BUTTONS (WCAG AA >= 5.4:1 Verdigris Teal Gradient)
+       ===================================================================== */
     button[data-testid="stBaseButton-primary"],
     .stDownloadButton > button[kind="primary"] {{
-        background-color: #1D4ED8 !important;
-        border-color: #1D4ED8 !important;
+        background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
+        border: 1px solid rgba(45, 212, 191, 0.28) !important;
         color: #FFFFFF !important;
         font-weight: 600 !important;
+        box-shadow: 0 2px 10px -2px rgba(13, 148, 136, 0.38) !important;
     }}
     button[data-testid="stBaseButton-primary"] p,
     button[data-testid="stBaseButton-primary"] span,
@@ -148,98 +375,18 @@ def _build_solaris_css(is_dark: bool = False) -> str:
     }}
     button[data-testid="stBaseButton-primary"]:hover,
     .stDownloadButton > button[kind="primary"]:hover {{
-        background-color: #1E40AF !important;
-        border-color: #1E40AF !important;
-        box-shadow: 0 6px 18px -4px rgba(29, 78, 216, 0.42) !important;
+        background: linear-gradient(135deg, #115E59 0%, #0F766E 100%) !important;
+        box-shadow: 0 6px 18px -4px rgba(13, 148, 136, 0.52) !important;
     }}
 
-    /* WCAG AA >= 6.5:1 Selected Segmented Control & Active Pill Contrast in Light & Dark */
-    button[data-variant="segmented_control"][data-selected="true"],
-    button[data-variant="segmented_control"][aria-checked="true"],
-    button[data-testid="stBaseButton-pillsActive"] {{
-        background-color: {seg_active_bg} !important;
-        border-color: {seg_active_border} !important;
-        color: {seg_active_fg} !important;
-        font-weight: 700 !important;
-    }}
-    button[data-variant="segmented_control"][data-selected="true"] p,
-    button[data-variant="segmented_control"][aria-checked="true"] p,
-    button[data-testid="stBaseButton-pillsActive"] p {{
-        color: {seg_active_fg} !important;
-        font-weight: 700 !important;
-    }}
-
-    /* Elevated Bento Card Surfaces */
-    div[data-testid="stVerticalBlockBorderWrapper"],
-    div[data-testid="stVerticalBlock"][style*="border"] {{
-        background: {card_bg};
-        border: 1px solid {card_border} !important;
-        border-radius: 16px !important;
-        box-shadow: {card_shadow};
-        transition:
-            transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 0.18s ease,
-            box-shadow 0.2s ease;
-    }}
-    div[data-testid="stVerticalBlockBorderWrapper"]:hover,
-    div[data-testid="stVerticalBlock"][style*="border"]:hover {{
-        border-color: {hover_border} !important;
-        box-shadow: {hover_shadow};
-    }}
-
-    /* Elevated KPI Metric Cards */
-    div[data-testid="stMetric"] {{
-        background: {card_bg};
-        border: 1px solid {card_border} !important;
-        border-radius: 16px !important;
-        box-shadow: {card_shadow};
-        position: relative;
-        overflow: hidden;
-        font-variant-numeric: tabular-nums;
-        transition:
-            transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 0.2s ease,
-            border-color 0.18s ease;
-    }}
-    div[data-testid="stMetric"]::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #1D4ED8 0%, #E11D48 55%, #F97316 100%);
-    }}
-    div[data-testid="stMetric"]:hover {{
-        transform: translate3d(0, -2px, 0);
-        border-color: {hover_border} !important;
-        box-shadow: {hover_shadow};
-    }}
-
-    .cg-kpi-spark-wrap {{
-        height: 32px;
-        margin-top: -0.35rem;
-        padding: 0 0.15rem;
-        overflow: hidden;
-    }}
-    .cg-spark-line {{
-        stroke-dasharray: 240;
-        stroke-dashoffset: 0;
-        animation: cgSparkDraw 0.52s cubic-bezier(0.22, 1, 0.36, 1);
-    }}
-    .cg-spark-bar {{
-        transform-origin: bottom;
-        animation: cgBarGrow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    }}
-
-    /* Tactile Button Micro-Interactions */
     .stButton > button,
     .stDownloadButton > button {{
+        border-radius: 9px !important;
         transition:
-            transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 0.16s ease,
-            background-color 0.16s ease,
-            border-color 0.16s ease !important;
+            transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.2s ease,
+            background-color 0.18s ease,
+            border-color 0.18s ease !important;
     }}
     .stButton > button:hover,
     .stDownloadButton > button:hover {{
@@ -250,43 +397,134 @@ def _build_solaris_css(is_dark: bool = False) -> str:
         transform: translate3d(0, 0.5px, 0) scale(0.985);
     }}
 
-    /* Editorial Sunrise Mesh Hero Card (targets preloaded native container for 0-CLS & instant LCP) */
-    div[class*="st-key-cg_hero_"] > div[data-testid="stVerticalBlockBorderWrapper"],
-    div[class*="st-key-cg_hero_"][data-testid="stVerticalBlockBorderWrapper"],
-    .cg-solaris-hero {{
-        position: relative;
-        border-radius: 18px !important;
-        border: 1px solid {hero_border} !important;
-        background: {hero_bg} !important;
+    /* =====================================================================
+       ELEVATED BENTO CARDS & KPI METRICS (Generous Breathing Room)
+       ===================================================================== */
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    div[data-testid="stVerticalBlock"][style*="border"] {{
+        background: {card_bg} !important;
+        border: 1px solid {card_border} !important;
+        border-radius: 16px !important;
+        padding: 1.25rem 1.35rem !important;
         box-shadow: {card_shadow} !important;
+        transition:
+            transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.22s ease,
+            box-shadow 0.24s ease;
     }}
-    div[class*="st-key-cg_hero_"] h2 {{
-        font-size: 1.28rem !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.022em !important;
-        line-height: 1.28 !important;
-        color: {title_color} !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover,
+    div[data-testid="stVerticalBlock"][style*="border"]:hover {{
+        border-color: {hover_border} !important;
+        box-shadow: {hover_shadow} !important;
     }}
 
-    /* Subtle Institutional Footer */
+    div[data-testid="stMetric"] {{
+        background: {card_bg} !important;
+        border: 1px solid {card_border} !important;
+        border-radius: 16px !important;
+        padding: 1.1rem 1.25rem !important;
+        box-shadow: {card_shadow} !important;
+        position: relative;
+        overflow: hidden;
+        font-variant-numeric: tabular-nums;
+        transition:
+            transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.22s ease,
+            border-color 0.2s ease;
+    }}
+    div[data-testid="stMetric"]::before {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #14B8A6 0%, rgba(56, 189, 248, 0.65) 55%, transparent 100%);
+    }}
+    div[data-testid="stMetric"]:hover {{
+        transform: translate3d(0, -2px, 0);
+        border-color: {hover_border} !important;
+        box-shadow: {hover_shadow} !important;
+    }}
+
+    /* Card Header Typography — crisp hierarchy, zero crowding */
+    .cg-card-title {{
+        font-size: 0.98rem;
+        font-weight: 650;
+        letter-spacing: -0.016em;
+        color: {title_color};
+        line-height: 1.32;
+        margin: 0;
+    }}
+    .cg-card-sub {{
+        font-size: 0.81rem;
+        color: {muted_text};
+        line-height: 1.45;
+        margin: 0.18rem 0 0.35rem 0;
+    }}
+
+    /* Section Header H2 Spacing */
+    div[data-testid="stHeading"] h2,
+    div[data-testid="stHeading"] h3 {{
+        letter-spacing: -0.02em !important;
+    }}
+
+    /* Reserved chart container heights for zero layout jump */
+    .st-key-ov_breakdown_chart,
+    .st-key-ov_traj_chart {{
+        min-height: 350px;
+    }}
+    .st-key-ov_grade_chart,
+    .st-key-ov_leaderboard_table {{
+        min-height: 360px;
+    }}
+    .st-key-ov_coupling_chart {{
+        min-height: 350px;
+    }}
+    .st-key-stu_radar_chart,
+    .st-key-stu_quartile_chart {{
+        min-height: 345px;
+    }}
+    .st-key-stu_gpa_trend_chart {{
+        min-height: 325px;
+    }}
+    .st-key-pred_feasibility_chart {{
+        min-height: 340px;
+    }}
+    .st-key-pred_feat_imp_chart {{
+        min-height: 250px;
+    }}
+    .st-key-ds_explorer_chart {{
+        min-height: 410px;
+    }}
+
+    /* Slim Refined Scrollbars */
+    ::-webkit-scrollbar {{
+        width: 7px;
+        height: 7px;
+    }}
+    ::-webkit-scrollbar-track {{
+        background: transparent;
+    }}
+    ::-webkit-scrollbar-thumb {{
+        background: rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+    }}
+    ::-webkit-scrollbar-thumb:hover {{
+        background: rgba(148, 163, 184, 0.42);
+    }}
+
+    /* Institutional Footer */
     .cg-footer {{
-        margin-top: 1.8rem;
-        padding-top: 0.85rem;
-        border-top: 1px solid {card_border};
+        margin-top: 2.2rem;
+        padding-top: 1rem;
+        border-top: 1px solid {subtle_line};
         display: flex;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.6rem;
         font-size: 0.78rem;
         color: {muted_text};
-    }}
-
-    div[data-testid="stElementContainer"]:has(.cg-seo-sync) {{
-        display: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }}
 
     @media (prefers-reduced-motion: reduce) {{
@@ -301,19 +539,74 @@ def _build_solaris_css(is_dark: bool = False) -> str:
 
 
 def inject_custom_css(is_dark: bool = False, page_title: str = "Overview") -> None:
-    """Record theme state for inline hero CSS & footer SEO sync (avoids extra above-the-fold DOM containers)."""
+    """Inject Verdigris & Obsidian CSS at top of render tree so navbar & cards paint with zero FOUC."""
     st.session_state["_cg_is_dark"] = is_dark
     st.session_state["_cg_page_title"] = page_title
+    css_block = _build_editorial_css(is_dark=is_dark)
+    st.html(f'<div class="cg-hidden-util" aria-hidden="true">{css_block}</div>')
+
+
+def render_brand_lockup() -> None:
+    """Render minimal geometric Verdigris mark + ChristGrade wordmark inside the floating navbar."""
+    st.html(
+        """<div class="cg-brand">
+            <span class="cg-brand-mark" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 16.5L9.5 11L13.5 14L20 7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="20" cy="7" r="2.2" fill="#FDE68A"/>
+                </svg>
+            </span>
+            <span class="cg-brand-name">ChristGrade</span>
+            <span class="cg-brand-tag">2MCA · Sem 2</span>
+        </div>"""
+    )
+
+
+def render_page_header(
+    title: str,
+    subtitle: str,
+    meta_summary: str | None = None,
+) -> None:
+    """Render a clean, authentic editorial H1 page header with understated live summary (no AI rainbow pills)."""
+    meta_html = ""
+    if meta_summary:
+        meta_html = (
+            f'<div class="cg-meta-summary">'
+            f'<span class="cg-live-dot" aria-hidden="true"></span>'
+            f'<span>{html.escape(meta_summary)}</span>'
+            f"</div>"
+        )
+    st.html(
+        f"""<header class="cg-page-head">
+            <div>
+                <h1>{html.escape(title)}</h1>
+                <p class="cg-page-sub">{html.escape(subtitle)}</p>
+            </div>
+            {meta_html}
+        </header>"""
+    )
+
+
+def render_hero_strip(
+    eyebrow: str,
+    title: str,
+    subtitle: str,
+    chips: list[str] | None = None,
+) -> None:
+    """Backward-compatible wrapper routing legacy hero calls to the clean editorial page header."""
+    _ = eyebrow
+    summary = " · ".join(chips[:2]) if chips else None
+    render_page_header(title=title, subtitle=subtitle, meta_summary=summary)
 
 
 def build_sparkline_svg(
     values: list[float],
     *,
-    color: str = "#2563EB",
+    color: str = "#14B8A6",
     kind: str = "area",
     uid: str = "sp",
 ) -> str:
-    """Build a crisp, zero-JS, GPU-animated inline SVG sparkline with zero accessibility noise."""
+    """Build a crisp inline SVG sparkline."""
     if not values or len(values) < 2:
         return ""
 
@@ -326,25 +619,26 @@ def build_sparkline_svg(
     if kind == "bar":
         gap = 4.0
         bar_w = max(6.0, (w - 2 * pad_x - gap * (n - 1)) / n)
-        rects: list[str] = []
+        rects = []
         for i, v in enumerate(values):
             norm = 0.24 + 0.76 * ((v - vmin) / span)
             bh = round(norm * (h - 2 * pad_y), 1)
             bx = round(pad_x + i * (bar_w + gap), 1)
             by = round(h - pad_y - bh, 1)
-            opacity = "0.92" if i == n - 1 else "0.58"
+            opacity = "0.92" if i == n - 1 else "0.55"
             rects.append(
-                f'<rect class="cg-spark-bar" x="{bx}" y="{by}" width="{bar_w:.1f}" '
+                f'<rect x="{bx}" y="{by}" width="{bar_w:.1f}" '
                 f'height="{bh}" rx="3" fill="{color}" fill-opacity="{opacity}"/>'
             )
         inner = "".join(rects)
     else:
-        pts: list[tuple[float, float]] = []
-        for i, v in enumerate(values):
-            px_x = round(pad_x + (i / (n - 1)) * (w - 2 * pad_x), 1)
-            px_y = round(h - pad_y - ((v - vmin) / span) * (h - 2 * pad_y), 1)
-            pts.append((px_x, px_y))
-
+        pts = [
+            (
+                round(pad_x + (i / (n - 1)) * (w - 2 * pad_x), 1),
+                round(h - pad_y - ((v - vmin) / span) * (h - 2 * pad_y), 1),
+            )
+            for i, v in enumerate(values)
+        ]
         d_line = "M " + " L ".join(f"{x},{y}" for x, y in pts)
         last_x, last_y = pts[-1]
         grad_id = f"cgSpGrad_{uid}"
@@ -360,51 +654,29 @@ def build_sparkline_svg(
             )
         inner = (
             f"{area_part}"
-            f'<path class="cg-spark-line" d="{d_line}" fill="none" stroke="{color}" '
+            f'<path d="{d_line}" fill="none" stroke="{color}" '
             f'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
             f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="{color}"/>'
         )
 
     return (
-        f'<div class="cg-kpi-spark-wrap" aria-hidden="true">'
         f'<svg viewBox="0 0 {int(w)} {int(h)}" width="196" height="32" '
         f'style="width:100%;height:32px;display:block;" preserveAspectRatio="none" '
         f'aria-hidden="true" focusable="false">{inner}</svg>'
-        f"</div>"
     )
 
 
-def render_hero_strip(
-    eyebrow: str,
-    title: str,
-    subtitle: str,
-    chips: list[str] | None = None,
-) -> None:
-    """Render elevated Solaris hero card using preloaded native components (instant LCP, 0 CLS, H2 heading)."""
-    slug = "".join(ch if ch.isalnum() else "_" for ch in title[:18].lower()).strip("_") or "main"
-    with st.container(border=True, gap="small", key=f"cg_hero_{slug}"):
-        st.caption(f"**{eyebrow.upper()}**")
-        st.header(title, anchor=False)
-        st.caption(subtitle)
-        if chips:
-            with st.container(horizontal=True, gap="small"):
-                for idx, c in enumerate(chips):
-                    badge_col = ("blue", "orange", "green", "violet")[idx % 4]
-                    st.badge(str(c), color=badge_col)
-
-
 def render_footer() -> None:
-    """Render Solaris CSS, institutional footer bar, and document.head SEO metadata below the fold."""
+    """Render institutional footer bar and sync document.head SEO metadata."""
     is_dark = bool(st.session_state.get("_cg_is_dark", False))
     page_title = str(st.session_state.get("_cg_page_title", "Overview"))
-    css_block = _build_solaris_css(is_dark=is_dark)
     safe_desc = html.escape(_META_DESCRIPTION, quote=True)
     safe_title = html.escape(f"ChristGrade · {page_title} · Academic Performance BI", quote=True)
 
     st.html(
-        f"""{css_block}<footer class="cg-footer">
-            <span><b>ChristGrade BI</b> · CHRIST (Deemed to be University) · 2MCA-A &amp; B (MCA411-2 Component 3)</span>
-            <span>Powered by Streamlit · Pandas · NumPy · ECharts · Plotly · Seaborn · SQLite3 · scikit-learn</span>
+        f"""<footer class="cg-footer">
+            <span><b>ChristGrade</b> · CHRIST (Deemed to be University) · Department of Computer Science (2MCA-A &amp; B)</span>
+            <span>MCA411-2 Component 3 · SQLite3 · Pandas · NumPy · ECharts · scikit-learn</span>
         </footer>
         <script>
         (function() {{
@@ -423,7 +695,7 @@ def render_footer() -> None:
                     }}
                 }}
                 upsertMeta('name', 'description', '{safe_desc}');
-                upsertMeta('name', 'theme-color', '{("#0A0D16" if is_dark else "#1D4ED8")}');
+                upsertMeta('name', 'theme-color', '{("#0B0E11" if is_dark else "#0F766E")}');
                 upsertMeta('property', 'og:title', '{safe_title}');
                 upsertMeta('property', 'og:description', '{safe_desc}');
                 upsertMeta('property', 'og:type', 'website');
@@ -440,9 +712,9 @@ def section_header(
     help_text: str | None = None,
     definition_key: str | None = None,
 ) -> DeltaGenerator:
-    """Render a semantic H3 section title with optional SQL/Formula popover and right-aligned actions."""
+    """Render a semantic H2 section heading (sequenced cleanly below H1 page title) with optional SQL popover."""
     with st.container(horizontal=True, vertical_alignment="center"):
-        st.subheader(title, help=help_text, anchor=False)
+        st.header(title, help=help_text, anchor=False)
         actions = st.container(
             horizontal=True,
             horizontal_alignment="right",
@@ -466,13 +738,13 @@ def card_header(
     verified: bool = False,
     help_text: str | None = None,
 ) -> DeltaGenerator:
-    """Render a card title row and return a right-aligned controls container."""
-    with st.container(horizontal=True, vertical_alignment="center", gap="small"):
-        with st.container(gap=None):
-            heading = f"**{title}** {VERIFIED_BADGE}" if verified else f"**{title}**"
-            st.markdown(heading, help=help_text)
-            if caption:
-                st.caption(caption)
+    """Render a clean editorial card header without AI-cliché badges and return right-aligned controls."""
+    _ = (verified, help_text)
+    sub_html = f'<p class="cg-card-sub">{html.escape(caption)}</p>' if caption else ""
+    with st.container(horizontal=True, vertical_alignment="center", gap="medium"):
+        st.html(
+            f'<div><div class="cg-card-title">{html.escape(title)}</div>{sub_html}</div>'
+        )
         controls = st.container(
             horizontal=True,
             horizontal_alignment="right",

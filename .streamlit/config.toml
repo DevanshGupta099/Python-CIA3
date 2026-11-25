@@ -1,6 +1,6 @@
-# ChristGrade "Solaris Editorial" Theme & High-Performance Runtime Config
-# Royal Cobalt x Crimson Rose x Sunset Coral x Champagne Gold
-# Tuned for 60fps rendering, WCAG AA >= 4.5:1 contrast, and zero telemetry overhead.
+# ChristGrade "Verdigris & Obsidian" Architectural Theme
+# Deep Obsidian / Warm Alabaster surfaces with Oceanic Teal, Seafoam Cyan & Champagne Amber accents.
+# Tuned for 60fps smoothness, generous typography spacing, and WCAG AA >= 4.5:1 contrast.
 
 [browser]
 gatherUsageStats = false
@@ -15,6 +15,7 @@ fastReruns = true
 
 [client]
 showErrorLinks = false
+toolbarMode = "minimal"
 
 [theme]
 font = "sans-serif"
@@ -24,15 +25,15 @@ baseFontSize = 14
 baseFontWeight = 400
 codeFontSize = "13px"
 headingFontSizes = ["26px", "19px", "16px", "15px", "14px", "12px"]
-headingFontWeights = [750, 700, 650, 600, 500, 500]
-metricValueFontSize = "1.82rem"
-metricValueFontWeight = 750
-baseRadius = "0.8rem"
-buttonRadius = "0.62rem"
+headingFontWeights = [700, 650, 600, 600, 500, 500]
+metricValueFontSize = "1.8rem"
+metricValueFontWeight = 700
+baseRadius = "0.75rem"
+buttonRadius = "0.58rem"
 showWidgetBorder = true
 showSidebarBorder = true
 linkUnderline = false
-paddingTop = "1rem"
+paddingTop = "0.75rem"
 paddingBottom = "2.5rem"
 
 [theme.sidebar]
@@ -40,103 +41,103 @@ paddingTop = "1rem"
 paddingBottom = "1.5rem"
 
 [theme.light]
-primaryColor = "#1D4ED8"
-backgroundColor = "#F6F7FB"
+primaryColor = "#0F766E"
+backgroundColor = "#F6F7F6"
 secondaryBackgroundColor = "#FFFFFF"
-codeBackgroundColor = "#EFF2F8"
-textColor = "#0F172A"
-linkColor = "#1D4ED8"
-borderColor = "#E2E6F0"
-codeTextColor = "#1E293B"
-blueColor = "#1D4ED8"
+codeBackgroundColor = "#EDF1F0"
+textColor = "#111827"
+linkColor = "#0F766E"
+borderColor = "#E2E7E5"
+codeTextColor = "#1F2937"
+blueColor = "#0284C7"
 greenColor = "#047857"
 yellowColor = "#B45309"
 orangeColor = "#C2410C"
 redColor = "#BE123C"
-violetColor = "#4338CA"
-grayColor = "#475569"
+violetColor = "#0F766E"
+grayColor = "#4B5563"
 chartCategoricalColors = [
-    "#2563EB",
-    "#F97316",
-    "#E11D48",
-    "#0EA5E9",
+    "#0D9488",
+    "#D97706",
+    "#0284C7",
+    "#059669",
+    "#EA580C",
+    "#64748B",
+    "#14B8A6",
     "#F59E0B",
-    "#10B981",
-    "#1D4ED8",
-    "#FB7185",
 ]
 chartSequentialColors = [
-    "#EFF6FF",
-    "#DBEAFE",
-    "#BFDBFE",
-    "#93C5FD",
-    "#60A5FA",
-    "#3B82F6",
-    "#2563EB",
-    "#1D4ED8",
-    "#E11D48",
-    "#F97316",
+    "#F0FDFA",
+    "#CCFBF1",
+    "#99F6E4",
+    "#5EEAD4",
+    "#2DD4BF",
+    "#14B8A6",
+    "#0D9488",
+    "#0F766E",
+    "#D97706",
+    "#EA580C",
 ]
-dataframeBorderColor = "#E2E6F0"
-dataframeHeaderBackgroundColor = "#F1F4FA"
-dataframeHeaderTextColor = "#334155"
+dataframeBorderColor = "#E2E7E5"
+dataframeHeaderBackgroundColor = "#F1F4F3"
+dataframeHeaderTextColor = "#374151"
 
 [theme.dark]
-primaryColor = "#60A5FA"
-backgroundColor = "#0A0D16"
-secondaryBackgroundColor = "#121726"
-codeBackgroundColor = "#1A2134"
-textColor = "#F1F5F9"
-linkColor = "#60A5FA"
-borderColor = "#1F293D"
-codeTextColor = "#E2E8F0"
-blueColor = "#60A5FA"
+primaryColor = "#2DD4BF"
+backgroundColor = "#0B0E11"
+secondaryBackgroundColor = "#12171D"
+codeBackgroundColor = "#171E26"
+textColor = "#F3F4F6"
+linkColor = "#2DD4BF"
+borderColor = "#1E2630"
+codeTextColor = "#E5E7EB"
+blueColor = "#38BDF8"
 greenColor = "#34D399"
 yellowColor = "#FBBF24"
 orangeColor = "#FB923C"
 redColor = "#FB7185"
-violetColor = "#818CF8"
-grayColor = "#94A3B8"
+violetColor = "#2DD4BF"
+grayColor = "#9CA3AF"
 chartCategoricalColors = [
-    "#3B82F6",
-    "#FB923C",
-    "#FB7185",
+    "#14B8A6",
+    "#F59E0B",
     "#38BDF8",
-    "#FBBF24",
     "#34D399",
-    "#60A5FA",
-    "#F43F5E",
+    "#FB923C",
+    "#94A3B8",
+    "#2DD4BF",
+    "#FBBF24",
 ]
 chartSequentialColors = [
     "#0F172A",
-    "#172554",
-    "#1E3A8A",
-    "#1D4ED8",
-    "#2563EB",
-    "#3B82F6",
-    "#E11D48",
-    "#F43F5E",
-    "#F97316",
+    "#112A2E",
+    "#134E4A",
+    "#0F766E",
+    "#0D9488",
+    "#14B8A6",
+    "#2DD4BF",
+    "#38BDF8",
+    "#F59E0B",
     "#FBBF24",
 ]
-dataframeBorderColor = "#1F293D"
-dataframeHeaderBackgroundColor = "#101524"
+dataframeBorderColor = "#1E2630"
+dataframeHeaderBackgroundColor = "#0F1419"
 dataframeHeaderTextColor = "#CBD5E1"
 
 [theme.light.sidebar]
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F1F4FA"
-codeBackgroundColor = "#F1F4FA"
-textColor = "#0F172A"
-borderColor = "#E2E6F0"
-primaryColor = "#1D4ED8"
-linkColor = "#1D4ED8"
+secondaryBackgroundColor = "#F1F4F3"
+codeBackgroundColor = "#F1F4F3"
+textColor = "#111827"
+borderColor = "#E2E7E5"
+primaryColor = "#0F766E"
+linkColor = "#0F766E"
 
 [theme.dark.sidebar]
-backgroundColor = "#0D121F"
-secondaryBackgroundColor = "#151C2E"
-codeBackgroundColor = "#1A2134"
-textColor = "#F1F5F9"
-borderColor = "#1F293D"
-primaryColor = "#2563EB"
-linkColor = "#60A5FA"
+backgroundColor = "#0E1217"
+secondaryBackgroundColor = "#141A21"
+codeBackgroundColor = "#171E26"
+textColor = "#F3F4F6"
+borderColor = "#1E2630"
+primaryColor = "#2DD4BF"
+linkColor = "#2DD4BF"

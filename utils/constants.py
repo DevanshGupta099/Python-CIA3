@@ -1,4 +1,4 @@
-"""Academic constants, CHRIST University grading rules, and Solaris palette tokens."""
+"""Academic constants, CHRIST University grading rules, and Verdigris & Amber palette tokens."""
 
 from __future__ import annotations
 
@@ -72,16 +72,16 @@ MIN_ESE_PASS_MARKS = 40.0
 MIN_INTERNAL_PASS_MARKS = 20.0
 MIN_TOTAL_PASS_MARKS = 40.0
 
-# CHRIST University 10-Point Grading Scale (Solaris Palette Mapping)
+# CHRIST University 10-Point Grading Scale (Verdigris Emerald -> Teal -> Cerulean -> Champagne -> Slate -> Rose)
 GRADE_SCALE: list[dict[str, object]] = [
     {"grade": "O",  "label": "Outstanding",     "min_score": 90.0, "gp": 10.0, "badge": "green",  "color": "#10B981"},
-    {"grade": "A+", "label": "Excellent",       "min_score": 80.0, "gp": 9.0,  "badge": "blue",   "color": "#2563EB"},
-    {"grade": "A",  "label": "Very Good",       "min_score": 70.0, "gp": 8.0,  "badge": "blue",   "color": "#0EA5E9"},
-    {"grade": "B+", "label": "Good",            "min_score": 60.0, "gp": 7.0,  "badge": "orange", "color": "#F59E0B"},
-    {"grade": "B",  "label": "Above Average",   "min_score": 55.0, "gp": 6.0,  "badge": "orange", "color": "#F97316"},
-    {"grade": "C",  "label": "Average",         "min_score": 50.0, "gp": 5.5,  "badge": "yellow", "color": "#EA580C"},
+    {"grade": "A+", "label": "Excellent",       "min_score": 80.0, "gp": 9.0,  "badge": "green",  "color": "#14B8A6"},
+    {"grade": "A",  "label": "Very Good",       "min_score": 70.0, "gp": 8.0,  "badge": "blue",   "color": "#38BDF8"},
+    {"grade": "B+", "label": "Good",            "min_score": 60.0, "gp": 7.0,  "badge": "yellow", "color": "#EAB308"},
+    {"grade": "B",  "label": "Above Average",   "min_score": 55.0, "gp": 6.0,  "badge": "orange", "color": "#F59E0B"},
+    {"grade": "C",  "label": "Average",         "min_score": 50.0, "gp": 5.5,  "badge": "orange", "color": "#F97316"},
     {"grade": "P",  "label": "Pass",            "min_score": 40.0, "gp": 5.0,  "badge": "gray",   "color": "#64748B"},
-    {"grade": "F",  "label": "Reappear / Fail", "min_score": 0.0,  "gp": 0.0,  "badge": "red",    "color": "#E11D48"},
+    {"grade": "F",  "label": "Reappear / Fail", "min_score": 0.0,  "gp": 0.0,  "badge": "red",    "color": "#F43F5E"},
 ]
 
 GRADE_ORDER: tuple[str, ...] = tuple(str(item["grade"]) for item in GRADE_SCALE)
@@ -98,15 +98,15 @@ RISK_BADGES: dict[str, str] = {
     "At Risk": "red",
 }
 
-# Solaris Editorial Palette (Royal Cobalt x Crimson Rose x Sunset Coral x Champagne Gold)
+# Verdigris & Champagne Editorial Palette
 PALETTE = {
-    "cobalt": "#2563EB",
-    "navy": "#1D4ED8",
-    "sky": "#0EA5E9",
-    "rose": "#E11D48",
-    "rose_soft": "#FB7185",
-    "coral": "#F97316",
-    "gold": "#F59E0B",
+    "cobalt": "#14B8A6",
+    "navy": "#0F766E",
+    "sky": "#38BDF8",
+    "rose": "#F43F5E",
+    "rose_soft": "#FDA4AF",
+    "coral": "#F59E0B",
+    "gold": "#EAB308",
     "emerald": "#10B981",
     "slate": "#64748B",
 }

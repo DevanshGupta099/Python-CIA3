@@ -1,4 +1,4 @@
-"""Live CIA Marks Manager: Lazy Single-Workflow CRUD, Validations & Manual/CSV/GSheets Sync."""
+"""Live CIA Marks Manager: Editorial Layout, Lazy Single-Workflow CRUD, Validations & Batch Sync."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from utils.database import (
     sync_validated_dataframe,
     upsert_student_assessment,
 )
-from utils.ui import card_header, render_hero_strip
+from utils.ui import card_header, render_page_header
 from utils.validators import (
     validate_assessment_scores,
     validate_imported_dataframe,
@@ -36,19 +36,10 @@ from utils.validators import (
 full_df: pd.DataFrame = st.session_state["full_df"]
 audit_df_top = get_audit_log_cached(get_db_version(), limit=25)
 
-render_hero_strip(
-    eyebrow="SQLite3 Persistence · Strict Input Validation · Google Sheets / CSV / Manual Batch Sync",
-    title="CIA Marks & Student Records Manager (Full CRUD)",
-    subtitle=(
-        "Add single subject records or onboard a complete 6-subject student manually, update profiles & "
-        "marks inline, delete with safety guards, or enter/sync live batch sheets."
-    ),
-    chips=[
-        f"{full_df['reg_no'].nunique()} Stored Students",
-        f"{len(full_df)} Subject Assessments",
-        f"{len(audit_df_top)} Recent Audit Events",
-        "Regex + Bound Validated",
-    ],
+render_page_header(
+    title="Marks & Student Records Manager",
+    subtitle="Create single or 6-subject student profiles, edit CIA marks inline, remove records with confirmation guards, or sync batch sheets.",
+    meta_summary=f"{full_df['reg_no'].nunique()} Students · {len(full_df)} Records",
 )
 
 CRUD_SECTIONS = [
@@ -70,15 +61,11 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
         label_visibility="collapsed",
     )
 
-    # -----------------------------------------------------------------------
-    # 1. CREATE — Single Subject OR Full 6-Subject Manual Student Onboarding
-    # -----------------------------------------------------------------------
     if active_tab == "Create Record":
         with st.container(border=True):
             c_ctrl = card_header(
                 "Create Student & Subject CIA Assessment",
-                "Enter a single subject assessment or onboard a new student across all 6 MCA subjects manually",
-                verified=True,
+                "Add a single subject assessment or onboard a new scholar across all 6 MCA subjects",
             )
             create_mode = c_ctrl.segmented_control(
                 "Entry Mode",
@@ -164,8 +151,8 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
 
             else:
                 st.caption(
-                    "Enter the new student's details below and manually fill/edit their marks across all **6 MCA subjects** "
-                    "so their Radar polygon and 22-credit SGPA Planner are immediately populated."
+                    "Enter student details below and fill marks across all **6 MCA subjects** "
+                    "to populate their Radar profile and 22-credit SGPA Planner in one step."
                 )
                 m1, m2, m3, m4, m5 = st.columns([1.2, 1.9, 1.0, 1.9, 1.0])
                 m_reg = m1.text_input("Register No. *", placeholder="2547131", key="m6_reg")
@@ -237,14 +224,11 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
                             )
                             st.rerun()
 
-    # -----------------------------------------------------------------------
-    # 2. READ & UPDATE — Search, Inline Grid & Profile+Marks Form
-    # -----------------------------------------------------------------------
     elif active_tab == "Read & Update Marks":
         with st.container(border=True):
             u_ctrl = card_header(
-                "Search, Inspect & Update Student Profiles & Marks",
-                "Filter records instantaneously and edit via Inline Spreadsheet or Complete Record Form",
+                "Search, Inspect & Update Student Marks",
+                "Filter records instantaneously and edit via Inline Spreadsheet or Record Form",
             )
             edit_mode = u_ctrl.segmented_control(
                 "Edit Style",
@@ -413,9 +397,6 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
                             st.toast(msg, icon=":material/check_circle:")
                             st.rerun()
 
-    # -----------------------------------------------------------------------
-    # 3. DELETE — Safe Record or Full Student Profile Removal
-    # -----------------------------------------------------------------------
     elif active_tab == "Delete Records":
         d_left, d_right = st.columns(2)
 
@@ -485,17 +466,13 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
                 else:
                     st.error(msg)
 
-    # -----------------------------------------------------------------------
-    # 4. LIVE SYNC (Manual Batch Sheet / CSV / Google Sheets) + Audit Log
-    # -----------------------------------------------------------------------
     else:
         sy_left, sy_right = st.columns([3.1, 1.9])
 
         with sy_left.container(border=True, height="stretch"):
             card_header(
-                "Live Batch Sheet, CSV & Google Sheets Sync",
-                "Manually enter/paste live batch rows, upload a CSV, or connect a public Google Sheet",
-                verified=True,
+                "Batch Sheet, CSV & Google Sheets Sync",
+                "Stage manual batch rows, upload a CSV, or fetch a public Google Sheet",
             )
             sync_src = st.segmented_control(
                 "Sync Source",
@@ -621,7 +598,7 @@ def _render_crud_workspace(df_all: pd.DataFrame, audit_df: pd.DataFrame) -> None
 
         with sy_right.container(border=True, height="stretch"):
             card_header(
-                "Live SQLite Audit Trail",
+                "SQLite Audit Trail",
                 "Timestamped log of Create, Update, Bulk Edit, Delete & Sync events",
             )
             st.dataframe(

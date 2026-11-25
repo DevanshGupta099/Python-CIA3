@@ -28,13 +28,12 @@ from utils.constants import (
     SUBJECTS,
     TARGET_GRADES,
 )
-from utils.ui import card_header, render_hero_strip, section_header
+from utils.ui import card_header, render_page_header, section_header
 
 full_df: pd.DataFrame = st.session_state["full_df"]
 leaderboard: pd.DataFrame = st.session_state["full_leaderboard"]
 is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
-# Handle incoming deep-link from Overview or Student Radar
 jumped_pred_reg = st.session_state.pop("_jump_pred_reg", None)
 if jumped_pred_reg:
     st.session_state["pred_input_src"] = "Student Record"
@@ -50,19 +49,10 @@ def _get_trained_bundle(row_count: int, checksum: float):
 
 ml_bundle = _get_trained_bundle(len(full_df), round(float(full_df["total_score"].sum()), 2))
 
-render_hero_strip(
-    eyebrow="Predictive Academic Calculator · CHRIST 10-Point Grading + scikit-learn",
-    title="End-Semester Target Score & Semester CGPA Planner",
-    subtitle=(
-        "Compute the exact End-Semester Exam marks (/100) required for O, A+, A, or target SGPA/CGPA, "
-        "with 60fps smooth feasibility curves and cross-validated ML forecasts."
-    ),
-    chips=[
-        f"5-Fold CV R² = {ml_bundle.r2_cv:.2f}",
-        f"MAE = ±{ml_bundle.mae_cv:.1f} pts",
-        "Ridge + Random Forest Ensemble",
-        "60fps Live Curve Morphing",
-    ],
+render_page_header(
+    title="End-Semester Score Predictor & SGPA Planner",
+    subtitle="Calculate required End-Semester marks (/100) for any CHRIST grade tier alongside 5-fold cross-validated ML forecasts.",
+    meta_summary=f"5-Fold CV R² {ml_bundle.r2_cv:.2f} · MAE ±{ml_bundle.mae_cv:.1f} pts",
 )
 
 
@@ -78,15 +68,10 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
     )
 
     if mode == "Subject Target Grade Predictor":
-        actions = section_header(
-            "Subject End-Sem Score Calculator & ML Forecast",
+        section_header(
+            "Subject End-Sem Calculator & ML Forecast",
             help_text="Syncs from an existing student record or custom live sliders.",
             definition_key="target_predictor",
-        )
-        actions.badge(
-            f"CV R² = {ml_bundle.r2_cv:.2f} · MAE = ±{ml_bundle.mae_cv:.1f} pts",
-            icon=":material/psychology:",
-            color="blue",
         )
 
         with st.container(border=True):
@@ -181,7 +166,7 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
                 key="pred_ml_algo",
             )
             if st.button(
-                "Reset Sliders to Record Baseline",
+                "Reset Sliders to Baseline",
                 icon=":material/restart_alt:",
                 type="tertiary",
             ):
@@ -223,7 +208,7 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
             f"{req_ese:.1f} / 100" if is_possible else "Capped (>100)",
             f"Target >= {cutoff:.0f}/100 final" if is_possible else f"Max possible: {internal_50 + 50:.1f}/100",
             delta_color="normal" if is_possible else "inverse",
-            icon=":material/ads_click:",
+            icon=":material/track_changes:",
             border=True,
         )
         k3.metric(
@@ -257,7 +242,7 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
             )
             st.error(
                 f"With **{internal_50:.2f}/50** internal marks, scoring 100/100 on End-Sem yields **{max_final:.1f}/100**. "
-                f"Grade **{target_grade}** ({cutoff:.0f}+) is mathematically out of reach — highest achievable grade is **{best_possible}**.",
+                f"Grade **{target_grade}** ({cutoff:.0f}+) is out of reach — highest achievable grade is **{best_possible}**.",
                 icon=":material/block:",
             )
 
@@ -265,14 +250,13 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
         with c_curve.container(border=True, height="stretch"):
             card_header(
                 "End-Sem Feasibility & Grade Band Curve",
-                "Final score trajectory across ESE 0–100 with ML confidence band & target pin",
-                verified=True,
+                "Final course score (/100) across ESE 0–100 with ML 90% confidence band",
             )
             render_echarts(
                 echarts_predictor_feasibility(
                     internal_50, target_grade, ml_pred, ml_lo, ml_hi, is_dark=dark_mode
                 ),
-                height=310,
+                height=340,
                 key="pred_feasibility_chart",
                 alt=f"End-Semester feasibility curve targeting Grade {target_grade}",
             )
@@ -303,18 +287,18 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
                     "Assessment": st.column_config.TextColumn("Feasibility"),
                 },
                 hide_index=True,
-                height=310,
+                height=340,
                 width="stretch",
             )
 
         with st.container(border=True):
             card_header(
-                "scikit-learn Feature Importance Profile",
-                "Relative contribution of CIA components, Attendance, and Sem 1 SGPA in predicting End-Sem scores",
+                "Predictive Feature Importance",
+                "Relative weight of CIA components, Attendance, and Sem 1 SGPA in predicting End-Sem scores",
             )
             render_echarts(
                 echarts_feature_importance(ml_bundle.feature_importance, is_dark=dark_mode),
-                height=240,
+                height=250,
                 key="pred_feat_imp_chart",
                 alt="scikit-learn Random Forest feature importance bar chart",
             )
@@ -398,7 +382,6 @@ def _render_predictor_workspace(dark_mode: bool) -> None:
             card_header(
                 "Recommended Subject-by-Subject End-Sem Action Plan",
                 "Prioritizes higher-credit subjects with strong CIA internals to minimize exam strain",
-                verified=True,
             )
             disp_plan = roadmap.copy()
             disp_plan["grade_badge"] = disp_plan["Recommended Grade"].map(lambda g: [g])

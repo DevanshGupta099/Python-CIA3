@@ -11,7 +11,7 @@
 
 ## Overview
 
-**ChristGrade (`v2.3.0`)** is an interactive, real-time Academic Performance Analytics Dashboard and End-Semester Target Score Predictor built with **Python** and **Streamlit** for CHRIST University MCA students and faculty. Styled with the **Solaris Editorial** design system (**Royal Cobalt × Crimson Rose × Sunset Coral × Champagne Gold**), powered by a **60fps Apache ECharts Canvas engine** (with preserved **Plotly** & **Seaborn** analytical suites), and accelerated with `@st.fragment` partial reruns, lazy single-module rendering, and `@st.cache_data` pipelines, it tracks **CIA 1 (`/20`)**, **Mid-Semester / CIA 2 (`/50`)**, **CIA 3 Assignment (`/20`)**, **Attendance eligibility (`85%` rule, `/5`)**, and **End-Semester Exam (`/100`)** outcomes across `2MCA-A` and `2MCA-B`.
+**ChristGrade (`v2.4.0`)** is an interactive, real-time Academic Performance Analytics Dashboard and End-Semester Target Score Predictor built with **Python** and **Streamlit** for CHRIST University MCA students and faculty. Crafted with the **Verdigris & Obsidian** design system (**Verdigris Teal × Emerald × Cerulean × Champagne Amber**), a bespoke **Floating Glass Command Navbar**, a **60fps Apache ECharts Canvas engine** (with preserved **Plotly** & **Seaborn** analytical suites), `@view-transition` + spring-eased UI motion, `@st.fragment` partial reruns, and `@st.cache_data` pipelines, it tracks **CIA 1 (`/20`)**, **Mid-Semester / CIA 2 (`/50`)**, **CIA 3 Assignment (`/20`)**, **Attendance eligibility (`85%` rule, `/5`)**, and **End-Semester Exam (`/100`)** outcomes across `2MCA-A` and `2MCA-B`.
 
 ### Core Modules & Capabilities
 1. **Executive Cohort Overview (`views/overview.py`)**
@@ -42,7 +42,7 @@
 
 ## Git Branching Workflow
 
-- `main` — Production release branch auto-deployed to https://christgrade.streamlit.app/ (`v2.3.0`)
+- `main` — Production release branch auto-deployed to https://christgrade.streamlit.app/ (`v2.4.0`)
 - `develop` — Integration branch merging feature milestones
 - `feat/database-and-validations` — SQLite3 schema, 60-student 2MCA seed, CRUD & regex/bound validators
 - `feat/analytics-and-ml-predictor` — Grading math, GroupBy/Pivot/Outlier studio & `scikit-learn` predictor
@@ -51,6 +51,7 @@
 - `feat/smooth-fragments-and-bugfixes` — `@st.fragment` isolation, PNG/SQLite caching & 60fps CSS/Plotly transitions
 - `feat/viva-workflows-and-gpa-trends` — Bidirectional URL query sync, cohort GPA trend, 6-subject onboarding & manual batch staging
 - `feat/lighthouse-60fps-echarts` — 60fps Apache ECharts Canvas engine, zero-Vega sparklines, lazy module execution & Lighthouse 100 Accessibility / SEO / Performance tuning
+- `feat/verdigris-glass-navbar-ui` — Verdigris & Obsidian gradient palette, bespoke Floating Glass Command Navbar, zero chart text collisions & spring-eased transitions
 
 ---
 

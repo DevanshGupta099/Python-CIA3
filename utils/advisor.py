@@ -63,7 +63,7 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
 <style>
   body {{ font-family: 'Segoe UI', system-ui, sans-serif; color: #0F172A; margin: 32px; background: #F8FAFC; }}
   .sheet {{ max-width: 960px; margin: auto; background: #FFFFFF; border-radius: 16px; padding: 32px; border: 1px solid #E2E8F0; box-shadow: 0 8px 24px rgba(15,23,42,0.06); }}
-  .bar {{ height: 5px; border-radius: 999px; background: linear-gradient(90deg, #1D4ED8, #E11D48, #F97316); margin-bottom: 20px; }}
+  .bar {{ height: 5px; border-radius: 999px; background: linear-gradient(90deg, #0F766E, #14B8A6, #F59E0B); margin-bottom: 20px; }}
   h1 {{ margin: 0; font-size: 22px; }}
   .sub {{ color: #475569; font-size: 13px; margin-top: 4px; }}
   .kpis {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }}
@@ -73,7 +73,7 @@ def generate_student_html_report(student_rows: pd.DataFrame, stu_meta: pd.Series
   table {{ width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }}
   th {{ background: #F1F5F9; color: #334155; padding: 9px 8px; text-align: left; border-bottom: 2px solid #CBD5E1; }}
   td {{ padding: 9px 8px; border-bottom: 1px solid #E2E8F0; }}
-  .badge {{ background: #DBEAFE; color: #1D4ED8; font-weight: 700; padding: 2px 8px; border-radius: 999px; }}
+  .badge {{ background: #CCFBF1; color: #0F766E; font-weight: 700; padding: 2px 8px; border-radius: 999px; }}
   .foot {{ margin-top: 22px; font-size: 11.5px; color: #475569; display: flex; justify-content: space-between; }}
 </style>
 </head>
