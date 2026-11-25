@@ -1,4 +1,4 @@
-"""Data Manipulation Studio: Lazy Single-Module Execution + 60fps ECharts Graph Explorer."""
+"""Data Manipulation Studio: Editorial Layout, Lazy Single-Module Execution & 60fps Explorer."""
 
 from __future__ import annotations
 
@@ -19,24 +19,15 @@ from utils.charts import (
     render_echarts,
 )
 from utils.constants import GRADE_ORDER
-from utils.ui import card_header, render_hero_strip
+from utils.ui import card_header, render_page_header
 
 base_df: pd.DataFrame = st.session_state["filtered_df"]
 is_dark = getattr(st.context.theme, "type", "light") == "dark"
 
-render_hero_strip(
-    eyebrow="Pandas & NumPy Data Engineering Playground",
-    title="Interactive Data Manipulation, Graph Explorer & Faculty Moderation Simulator",
-    subtitle=(
-        "Filter assessment ranges dynamically to manipulate 6 ECharts visualization families, build multi-level "
-        "GroupBy summaries, reshape Pivot/Cross-Tab matrices, detect Z-score outliers, and simulate moderation policies."
-    ),
-    chips=[
-        "60fps Dynamic Charts",
-        "Lazy Single-Module Execution",
-        "Pivot & Cross-Tab Heatmaps",
-        "Policy Moderation Simulator",
-    ],
+render_page_header(
+    title="Data Studio & Policy Simulator",
+    subtitle="Slice numeric ranges, explore multi-dimensional GroupBy and Pivot matrices, inspect Z-score outliers, and model moderation curves.",
+    meta_summary=f"{len(base_df)} Filtered Assessments",
 )
 
 _toolbar_fn = st.session_state.get("_render_global_filter_toolbar")
@@ -44,7 +35,7 @@ if callable(_toolbar_fn):
     _toolbar_fn()
 
 if base_df.empty:
-    st.warning("No records match the active global filters. Click **Reset** above.")
+    st.warning("No records match the active global filters. Click **Reset** in the top bar.")
     st.stop()
 
 METRIC_OPTIONS = {
@@ -66,11 +57,11 @@ COLOR_DIMS = {
 }
 
 STUDIO_MODULES = [
-    "Interactive Graph Explorer",
-    "GroupBy & Aggregations",
-    "Pivot & Cross-Tab Builder",
-    "Z-Scores & Outlier Detection",
-    "Faculty Policy Simulator",
+    "Graph Explorer",
+    "GroupBy & Dispersion",
+    "Pivot & Cross-Tab",
+    "Z-Scores & Outliers",
+    "Policy Simulator",
 ]
 
 
@@ -78,8 +69,8 @@ STUDIO_MODULES = [
 def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
     with st.container(border=True):
         card_header(
-            "Live Data Slicers (Manipulates Active Studio Module Below)",
-            "Combine these numeric range sliders with the top Cohort/Subject/Grade filter bar",
+            "Numeric Range Slicers",
+            "Filter internal, End-Semester, and attendance intervals dynamically across all studio modules",
         )
         f1, f2, f3, f4 = st.columns([1.4, 1.4, 1.4, 1.4])
         int_range = f1.slider("Internal CIA Range (/50)", 0.0, 50.0, (15.0, 50.0), 1.0)
@@ -104,25 +95,25 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
         & (df_source["attendance"].between(att_range[0], att_range[1]))
     ].sort_values(sort_metric, ascending=False)
 
-    st.caption(
-        f"Active slice retains **{len(sliced_df)}** of **{len(df_source)}** records "
-        f"(**{sliced_df['reg_no'].nunique()}** unique students)."
-    )
-
     if sliced_df.empty:
         st.info("Widen the numeric sliders above to include assessment records.", icon=":material/tune:")
         return
 
-    active_mod = st.segmented_control(
-        "Studio Module",
-        STUDIO_MODULES,
-        default="Interactive Graph Explorer",
-        required=True,
-        key="ds_active_module",
-        label_visibility="collapsed",
-    )
+    with st.container(horizontal=True, vertical_alignment="center"):
+        active_mod = st.segmented_control(
+            "Studio Module",
+            STUDIO_MODULES,
+            default="Graph Explorer",
+            required=True,
+            key="ds_active_module",
+            label_visibility="collapsed",
+        )
+        st.caption(
+            f"Retaining **{len(sliced_df)}** of **{len(df_source)}** assessments "
+            f"(**{sliced_df['reg_no'].nunique()}** students)"
+        )
 
-    if active_mod == "Interactive Graph Explorer":
+    if active_mod == "Graph Explorer":
         with st.container(border=True):
             c1, c2, c3, c4 = st.columns([1.6, 1.3, 1.3, 1.3])
             chart_kind = c1.selectbox(
@@ -169,16 +160,16 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
                     metric_labels=METRIC_OPTIONS,
                     is_dark=dark_mode,
                 ),
-                height=405,
+                height=410,
                 key="ds_explorer_chart",
                 alt=f"Data Studio {chart_kind} chart",
             )
 
-    elif active_mod == "GroupBy & Aggregations":
+    elif active_mod == "GroupBy & Dispersion":
         with st.container(border=True):
             card_header(
-                "Pandas Multi-Column GroupBy & Dispersion Statistics",
-                "Computes Count, Mean, Median, Std Dev, NumPy IQR, Min, Max & Pass %",
+                "Multi-Column GroupBy & Dispersion Summary",
+                "Count, Mean, Median, Std Dev, NumPy IQR, Min, Max & Pass Rate",
             )
             group_dims = st.multiselect(
                 "Group By Dimensions",
@@ -192,18 +183,18 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
                 grp_df = build_groupby_summary(sliced_df, group_dims)
                 st.dataframe(grp_df, hide_index=True, width="stretch")
                 st.download_button(
-                    "Download GroupBy Summary CSV",
+                    "Export GroupBy CSV",
                     data=grp_df.to_csv(index=False).encode("utf-8"),
                     file_name="christgrade_groupby_summary.csv",
                     mime="text/csv",
                     icon=":material/download:",
                 )
 
-    elif active_mod == "Pivot & Cross-Tab Builder":
+    elif active_mod == "Pivot & Cross-Tab":
         with st.container(border=True):
             card_header(
-                "Dynamic Pivot Table & Cross-Tabulation Matrix",
-                "Reshape multi-dimensional academic records and inspect cell intensity via heatmap",
+                "Dynamic Pivot & Cross-Tabulation Matrix",
+                "Reshape multi-dimensional academic records with synchronized cell intensity heatmap",
             )
             p1, p2, p3, p4 = st.columns(4)
             idx_col = p1.selectbox("Row Index", ["subject_short", "section", "risk_status", "grade"], index=0, key="ds_piv_idx")
@@ -233,16 +224,16 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
                     core = piv_df.iloc[:-1, :-1] if len(piv_df) > 1 and piv_df.shape[1] > 1 else piv_df
                     render_echarts(
                         echarts_pivot_heatmap(core, is_dark=dark_mode),
-                        height=290,
+                        height=300,
                         key="ds_pivot_heatmap",
                         alt=f"Pivot heatmap of {val_col} by {idx_col} and {col_col}",
                     )
 
-    elif active_mod == "Z-Scores & Outlier Detection":
+    elif active_mod == "Z-Scores & Outliers":
         with st.container(border=True):
             card_header(
-                "Feature Scaling (Min-Max & Z-Score) and 1.5×IQR Outlier Slicer",
-                "Standardizes raw marks onto [0, 1] and standard normal N(0, 1) scales",
+                "Feature Scaling & 1.5×IQR Outlier Slicer",
+                "Min-Max [0, 1] normalization, Z-score standardization, and interquartile outlier detection",
             )
             nc1, nc2 = st.columns([1.6, 2.4])
             norm_metric = nc1.selectbox(
@@ -285,16 +276,15 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
                     "iqr_outlier": st.column_config.TextColumn("IQR Diagnostic"),
                 },
                 hide_index=True,
-                height=340,
+                height=345,
                 width="stretch",
             )
 
     else:
         with st.container(border=True):
             card_header(
-                "Faculty Moderation & Condonation What-If Policy Simulator",
-                "Simulate cohort-wide CIA3 bonus marks, End-Sem moderation, or medical attendance condonation",
-                verified=True,
+                "Faculty Moderation & Condonation Simulator",
+                "Model cohort-wide CIA 3 bonus marks, End-Sem curve adjustments, and medical attendance condonation",
             )
             s1, s2, s3 = st.columns(3)
             cia3_bonus = s1.slider("CIA 3 Moderation Bonus (+Marks /20)", 0.0, 5.0, 1.5, 0.5, key="ds_sim_c3")
@@ -328,7 +318,7 @@ def _render_data_studio(df_source: pd.DataFrame, dark_mode: bool) -> None:
 
             render_echarts(
                 echarts_policy_sim(before_counts, after_counts, is_dark=dark_mode),
-                height=300,
+                height=310,
                 key="ds_policy_sim_chart",
                 alt="Grade distribution before and after policy moderation simulation",
             )
